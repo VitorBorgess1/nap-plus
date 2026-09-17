@@ -29,8 +29,8 @@ Fora de escopo nesta etapa: app mobile nativo, entrega física dos produtos, ges
 | Jean Cristian Hertz | Scrum Master |
 | Pedro Carvalho Reiss | Product Owner |
 | Bruno Fortes | Desenvolvedor — Pagamentos e Integrações |
-| José Naildo da Silva Costa | Desenvolvedor — Backend / Banco de Dados |
-| Lucas Firmino Rocha | Desenvolvedor — Frontend |
+| Lucas Firmino Rocha  | Desenvolvedor — Backend / Banco de Dados |
+| José Naildo da Silva Costa | Desenvolvedor — Frontend |
 | Pedro Gabriel de Carmargo Borges | Desenvolvedor — Frontend |
 
 ## Frentes de trabalho
