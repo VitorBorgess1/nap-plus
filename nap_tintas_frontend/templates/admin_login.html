@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login administrativo | NAP Tintas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-login-page">
+  <main class="admin-login-shell">
+    <section class="admin-login-visual" aria-hidden="true">
+      <div class="login-color-orbit login-orbit-one"></div>
+      <div class="login-color-orbit login-orbit-two"></div>
+      <div class="login-color-orbit login-orbit-three"></div>
+      <div class="login-visual-content">
+        <div class="login-logo-mark">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M76.84 10.21 A48 48 0 0 0 35.17 4.35 Q50.64 13.51 52.61 25.14 A25 25 0 0 1 71.20 36.75 Q79.15 28.03 76.84 10.21Z" fill="#f7e23f"/>
+            <path d="M35.17 4.35 A48 48 0 0 0 2.47 43.32 Q17.48 33.43 28.80 36.75 A25 25 0 0 1 52.61 25.14 Q50.64 13.51 35.17 4.35Z" fill="#4fbf52"/>
+            <path d="M2.47 43.32 A48 48 0 0 0 27.47 92.38 Q23.31 74.89 30.30 65.39 A25 25 0 0 1 28.80 36.75 Q17.48 33.43 2.47 43.32Z" fill="#2f52c2"/>
+            <path d="M27.47 92.38 A48 48 0 0 0 71.04 93.14 Q54.45 86.23 50.87 74.98 A25 25 0 0 1 30.30 65.39 Q23.31 74.89 27.47 92.38Z" fill="#e64586"/>
+            <path d="M71.04 93.14 A48 48 0 0 0 97.88 53.35 Q83.60 64.26 72.07 61.74 A25 25 0 0 1 50.87 74.98 Q54.45 86.23 71.04 93.14Z" fill="#ee3b3d"/>
+            <path d="M97.88 53.35 A48 48 0 0 0 76.84 10.21 Q79.15 28.03 71.20 36.75 A25 25 0 0 1 72.07 61.74 Q83.60 64.26 97.88 53.35Z" fill="#f6a01e"/>
+          </svg>
+        </div>
+        <p class="login-kicker">NAP TINTAS</p>
+        <h1>Gestão simples para uma operação organizada.</h1>
+        <p class="login-visual-copy">Acompanhe estoque, pedidos, compras e expedições em um só lugar.</p>
+        <div class="login-feature-row"><span>Estoque</span><span>Pedidos</span><span>Logística</span></div>
+      </div>
+    </section>
+
+    <section class="admin-login-card">
+      <a class="login-back" href="{{ url_for('home') }}">← Voltar ao site</a>
+      <div class="login-mobile-brand">NAP <span>TINTAS</span></div>
+      <div class="login-heading">
+        <p class="eyebrow">ÁREA RESTRITA</p>
+        <h2>Acesse o painel</h2>
+        <p>Entre com suas credenciais administrativas para continuar.</p>
+      </div>
+      <form class="login-form" action="#" method="post">
+        <label for="admin-email">E-mail
+          <input id="admin-email" name="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="email">
+        </label>
+        <label for="admin-password">Senha
+          <div class="password-field">
+            <input id="admin-password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password">
+            <button type="button" class="password-toggle" aria-label="Mostrar senha">⌣</button>
+          </div>
+        </label>
+        <div class="login-options">
+          <label class="remember-option"><input type="checkbox"> <span>Lembrar acesso</span></label>
+          <a href="#">Esqueci minha senha</a>
+        </div>
+        <button class="login-submit" type="button">Entrar no painel <span>→</span></button>
+      </form>
+      <p class="login-demo-note">Interface de demonstração · autenticação ainda não conectada.</p>
+    </section>
+  </main>
+<script src="{{ url_for('static', filename='js/admin-login.js') }}"></script>
+</body>
+</html>

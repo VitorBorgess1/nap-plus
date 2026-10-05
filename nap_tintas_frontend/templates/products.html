@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import icon %}
+
+{% block title %}Catálogo | NAP Tintas{% endblock %}
+
+{% block content %}
+    <main class="products-page">
+        <section class="catalog-hero">
+            <div class="catalog-hero-copy">
+                <p class="eyebrow">CATÁLOGO NAP TINTAS</p>
+                <h1>Encontre o produto certo para o seu projeto.</h1>
+                <p>Pesquise pelo produto, superfície, ambiente ou necessidade. Se você não souber o nome da tinta, tudo bem: comece pelo que deseja fazer.</p>
+            </div>
+            <div class="catalog-hero-badge">
+                <span>{{ icon('palette') }}</span>
+                <strong>Da preparação ao acabamento</strong>
+                <small>Tintas, tratamentos, ferramentas e acessórios.</small>
+            </div>
+        </section>
+
+        <section class="catalog-search-section">
+            <div class="catalog-search">
+                <span>{{ icon('search') }}</span>
+                <input id="search-input" type="search" placeholder="Busque por produto, superfície, ambiente ou finalidade..." autocomplete="off">
+                <button id="clear-search" type="button" aria-label="Limpar busca">Limpar</button>
+            </div>
+            <div class="search-examples">
+                <span>Pesquisas populares:</span>
+                <button type="button" class="quick-search" data-search="tinta para parede">Tinta para parede</button>
+                <button type="button" class="quick-search" data-search="portão">Portão</button>
+                <button type="button" class="quick-search" data-search="piso">Piso</button>
+                <button type="button" class="quick-search" data-search="mofo">Mofo</button>
+                <button type="button" class="quick-search" data-search="madeira">Madeira</button>
+            </div>
+        </section>
+
+        <section class="catalog-block">
+            <div class="catalog-block-heading">
+                <div>
+                    <p class="eyebrow">CATEGORIAS</p>
+                    <h2>Comece pelo tipo de produto</h2>
+                </div>
+                <button id="show-all" class="text-button" type="button">Ver todos os produtos {{ icon('arrow-right') }}</button>
+            </div>
+
+            <div class="catalog-category-grid">
+                <button class="catalog-category category-orange" data-category="Parede" type="button"><span>{{ icon('paint-roller') }}</span><strong>Paredes e tetos</strong><small>Acrílicas, látex, PVA, laváveis e antimofo</small></button>
+                <button class="catalog-category category-blue" data-category="Piso" type="button"><span>{{ icon('grid-2x2') }}</span><strong>Pisos e concreto</strong><small>Garagens, calçadas, quadras e áreas de circulação</small></button>
+                <button class="catalog-category category-yellow" data-category="Madeira e Metal" type="button"><span>{{ icon('hammer') }}</span><strong>Madeira e metal</strong><small>Esmaltes, vernizes, stains e fundos</small></button>
+                <button class="catalog-category category-green" data-category="Tratamento" type="button"><span>{{ icon('shield-check') }}</span><strong>Tratamento e proteção</strong><small>Impermeabilizantes, seladores e preparadores</small></button>
+                <button class="catalog-category category-pink catalog-category-future" data-category="Texturas" type="button"><span>{{ icon('sparkles') }}</span><strong>Texturas e efeitos</strong><small>Texturas, grafiato e acabamentos decorativos</small><em>Catálogo em expansão</em></button>
+                <button class="catalog-category category-purple" data-category="Multiuso" type="button"><span>{{ icon('spray-can') }}</span><strong>Sprays e multiuso</strong><small>Pequenos projetos, objetos e retoques</small></button>
+                <button class="catalog-category category-neutral catalog-category-future" data-category="Preparação" type="button"><span>{{ icon('brick-wall') }}</span><strong>Preparação</strong><small>Massas, fundos, primers, lixas e removedores</small><em>Catálogo em expansão</em></button>
+                <button class="catalog-category category-dark catalog-category-future" data-category="Ferramentas" type="button"><span>{{ icon('paintbrush') }}</span><strong>Ferramentas e acessórios</strong><small>Rolos, pincéis, fitas, bandejas e EPIs</small><em>Catálogo em expansão</em></button>
+            </div>
+        </section>
+
+        <section class="catalog-block compact-block">
+            <div class="catalog-block-heading">
+                <div>
+                    <p class="eyebrow">ENCONTRE POR AMBIENTE</p>
+                    <h2>Você está pintando onde?</h2>
+                </div>
+            </div>
+            <div class="catalog-pills">
+                <button type="button" data-search="sala">{{ icon('sofa') }}Sala</button>
+                <button type="button" data-search="quarto">{{ icon('bed-double') }}Quarto</button>
+                <button type="button" data-search="banheiro">{{ icon('shower-head') }}Banheiro</button>
+                <button type="button" data-search="cozinha">{{ icon('cooking-pot') }}Cozinha</button>
+                <button type="button" data-search="fachada">{{ icon('house') }}Fachada</button>
+                <button type="button" data-search="garagem">{{ icon('car') }}Garagem</button>
+                <button type="button" data-search="portão">{{ icon('fence') }}Portão</button>
+                <button type="button" data-search="móvel">{{ icon('armchair') }}Móveis</button>
+            </div>
+        </section>
+
+        <section class="catalog-block compact-block">
+            <div class="catalog-block-heading">
+                <div>
+                    <p class="eyebrow">ENCONTRE PELA NECESSIDADE</p>
+                    <h2>O que você precisa resolver?</h2>
+                </div>
+            </div>
+            <div class="need-grid">
+                <button type="button" data-search="mofo">Tenho problema com mofo</button>
+                <button type="button" data-search="umidade">Preciso combater umidade</button>
+                <button type="button" data-search="infiltração">Quero tratar infiltração</button>
+                <button type="button" data-search="lavável">Quero uma tinta fácil de limpar</button>
+                <button type="button" data-search="cor">Quero mudar a cor</button>
+                <button type="button" data-search="retoque">Preciso fazer um retoque</button>
+            </div>
+        </section>
+
+        <section class="catalog-products-section" id="produtos-lista">
+            <div class="catalog-products-header">
+                <div>
+                    <p class="eyebrow">PRODUTOS DISPONÍVEIS</p>
+                    <h2>Confira o catálogo</h2>
+                </div>
+                <span id="results-count" class="results-count"></span>
+            </div>
+
+            <div class="advanced-filters">
+                <label>Categoria
+                    <select id="category-filter">
+                        <option value="">Todas</option>
+                        <option value="Parede">Paredes e tetos</option>
+                        <option value="Piso">Pisos e concreto</option>
+                        <option value="Madeira e Metal">Madeira e metal</option>
+                        <option value="Tratamento">Tratamento e proteção</option>
+                        <option value="Texturas">Texturas e efeitos</option>
+                        <option value="Multiuso">Sprays e multiuso</option>
+                        <option value="Preparação">Preparação</option>
+                        <option value="Ferramentas">Ferramentas e acessórios</option>
+                    </select>
+                </label>
+                <label>Acabamento
+                    <select id="finish-filter">
+                        <option value="">Todos</option>
+                        <option value="Fosco">Fosco</option>
+                        <option value="Acetinado">Acetinado</option>
+                        <option value="Brilhante">Brilhante</option>
+                    </select>
+                </label>
+                <label>Marca
+                    <select id="brand-filter">
+                        <option value="">Todas</option>
+                    </select>
+                </label>
+                <button id="reset-filters" class="filter-reset" type="button">Limpar filtros</button>
+            </div>
+
+            <div id="active-filter" class="active-filter" hidden></div>
+            <div id="product-grid" class="product-grid">
+                <p>Carregando produtos...</p>
+            </div>
+        </section>
+
+        <section class="help-banner">
+            <div>
+                <p class="eyebrow">AINDA NÃO SABE QUAL PRODUTO ESCOLHER?</p>
+                <h2>Conte o que você quer pintar e a NAP ajuda a encontrar o caminho.</h2>
+                <p>Use o recomendador para receber uma indicação de acordo com sua superfície, ambiente e objetivo.</p>
+            </div>
+            <a class="btn btn-primary" href="{{ url_for('home') }}#recomendador">Usar recomendador {{ icon('arrow-right') }}</a>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/products.js') }}"></script>
+{% endblock %}

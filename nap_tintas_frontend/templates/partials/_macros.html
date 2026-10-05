@@ -1,0 +1,5 @@
+{# Macros reutilizáveis. Importe com:
+   {% from "partials/_macros.html" import icon %} #}
+{% macro icon(name) -%}
+<svg class="icon" aria-hidden="true"><use href="#i-{{ name }}"></use></svg>
+{%- endmacro %}

@@ -1,0 +1,62 @@
+{% from "partials/_macros.html" import icon %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel administrativo | NAP Tintas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+{% include "partials/_icons.html" %}
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="{{ url_for('home') }}" title="Ir para o site"><svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M76.84 10.21 A48 48 0 0 0 35.17 4.35 Q50.64 13.51 52.61 25.14 A25 25 0 0 1 71.20 36.75 Q79.15 28.03 76.84 10.21Z" fill="#f7e23f"/>
+            <path d="M35.17 4.35 A48 48 0 0 0 2.47 43.32 Q17.48 33.43 28.80 36.75 A25 25 0 0 1 52.61 25.14 Q50.64 13.51 35.17 4.35Z" fill="#4fbf52"/>
+            <path d="M2.47 43.32 A48 48 0 0 0 27.47 92.38 Q23.31 74.89 30.30 65.39 A25 25 0 0 1 28.80 36.75 Q17.48 33.43 2.47 43.32Z" fill="#2f52c2"/>
+            <path d="M27.47 92.38 A48 48 0 0 0 71.04 93.14 Q54.45 86.23 50.87 74.98 A25 25 0 0 1 30.30 65.39 Q23.31 74.89 27.47 92.38Z" fill="#e64586"/>
+            <path d="M71.04 93.14 A48 48 0 0 0 97.88 53.35 Q83.60 64.26 72.07 61.74 A25 25 0 0 1 50.87 74.98 Q54.45 86.23 71.04 93.14Z" fill="#ee3b3d"/>
+            <path d="M97.88 53.35 A48 48 0 0 0 76.84 10.21 Q79.15 28.03 71.20 36.75 A25 25 0 0 1 72.07 61.74 Q83.60 64.26 97.88 53.35Z" fill="#f6a01e"/>
+          </svg><span><strong>NAP Tintas</strong><small>Painel administrativo</small></span></a>
+    <nav id="nav" aria-label="Seções do painel">
+      <a href="#dashboard" data-r="dashboard" style="--c:var(--blue)">{{ icon('layout-dashboard') }}Visão geral</a>
+      <a href="#produtos" data-r="produtos" style="--c:var(--orange)">{{ icon('package') }}Produtos &amp; estoque<b id="nb-produtos" hidden></b></a>
+      <a href="#pedidos" data-r="pedidos" style="--c:var(--green)">{{ icon('shopping-bag') }}Pedidos<b id="nb-pedidos" hidden></b></a>
+      <a href="#compras" data-r="compras" style="--c:var(--purple)">{{ icon('clipboard-list') }}Ordens de compra</a>
+      <a href="#expedicoes" data-r="expedicoes" style="--c:var(--yellow)">{{ icon('truck') }}Expedições</a>
+      <a href="#fornecedores" data-r="fornecedores" style="--c:var(--pink)">{{ icon('factory') }}Fornecedores</a>
+    </nav>
+    <div class="side-foot">
+      <a href="{{ url_for('home') }}">{{ icon('arrow-left') }}Voltar ao site</a>
+      <a href="{{ url_for('admin_login') }}">{{ icon('log-out') }}Sair</a>
+      <button type="button" data-act="reset">{{ icon('rotate-ccw') }}Restaurar dados de exemplo</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top"><h1 id="title">Visão geral</h1><span class="demo">Protótipo · dados salvos neste navegador</span></header>
+
+    <section id="sec-dashboard" class="sec"></section>
+
+    <section id="sec-produtos" class="sec">
+      <div class="bar">
+        <input id="q" type="search" placeholder="Buscar por produto, marca ou categoria" aria-label="Buscar produto">
+        <div class="chips" id="inv-chips"></div>
+        <button class="btn" data-act="new-product">{{ icon('plus') }}Adicionar produto</button>
+      </div>
+      <div class="tw"><table id="inv-table"></table></div>
+    </section>
+
+    <section id="sec-pedidos" class="sec"></section>
+    <section id="sec-compras" class="sec"></section>
+    <section id="sec-expedicoes" class="sec"></section>
+    <section id="sec-fornecedores" class="sec"></section>
+  </main>
+</div>
+
+<div id="modal" class="modal" hidden><div class="card" role="dialog" aria-modal="true"><button class="x" data-act="close" aria-label="Fechar">{{ icon('x') }}</button><div id="modal-body"></div></div></div>
+<div id="toast" class="toast" role="status"></div>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
