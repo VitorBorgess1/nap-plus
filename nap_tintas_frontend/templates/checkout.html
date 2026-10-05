@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import icon %}
+
+{% block title %}Checkout | NAP Tintas{% endblock %}
+
+{% block content %}
+    <main class="section checkout-page">
+        <div class="section-heading">
+            <p class="eyebrow">SEU PEDIDO</p>
+            <h1>Vamos finalizar?</h1>
+            <p>Confira seus produtos e preencha os dados para criar o pedido demonstrativo.</p>
+        </div>
+
+        <div class="checkout-grid">
+            <section class="panel cart-panel">
+                <div class="panel-title">
+                    <span class="panel-icon icon-orange">{{ icon('shopping-cart') }}</span>
+                    <h2>Seu carrinho</h2>
+                </div>
+                <div id="cart-items"></div>
+                <div class="total-row">
+                    <span>Total do pedido</span>
+                    <strong id="cart-total">R$ 0,00</strong>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-title">
+                    <span class="panel-icon icon-blue">{{ icon('credit-card') }}</span>
+                    <h2>Dados do cliente</h2>
+                </div>
+
+                <form id="payment-form">
+                    <label>
+                        Nome
+                        <input id="customer-name" required placeholder="Seu nome completo">
+                    </label>
+
+                    <label>
+                        E-mail
+                        <input id="customer-email" type="email" required placeholder="voce@email.com">
+                    </label>
+
+                    <label>
+                        CPF/CNPJ
+                        <input id="customer-document" required placeholder="Documento">
+                    </label>
+
+                    <div class="payment-note">
+                        <strong>Pagamento demonstrativo</strong>
+                        <p>Esta versão não processa pagamentos reais. O endpoint está preparado para futura integração com um gateway.</p>
+                    </div>
+
+                    <button class="btn btn-primary full-width" type="submit">
+                        Criar pedido {{ icon('arrow-right') }}
+                    </button>
+                </form>
+
+                <div id="payment-result"></div>
+            </section>
+        </div>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/checkout.js') }}"></script>
+{% endblock %}

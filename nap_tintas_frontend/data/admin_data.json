@@ -1,0 +1,81 @@
+{
+  "orders": [
+    {
+      "id": "PED-1001",
+      "customer": "Mariana Souza",
+      "date": "2026-09-19",
+      "total": 379.8,
+      "status": "Separando",
+      "items": 2,
+      "payment": "Pix"
+    },
+    {
+      "id": "PED-1002",
+      "customer": "Carlos Lima",
+      "date": "2026-09-20",
+      "total": 169.9,
+      "status": "Pago",
+      "items": 1,
+      "payment": "Cartão"
+    },
+    {
+      "id": "PED-1003",
+      "customer": "Ana Oliveira",
+      "date": "2026-09-20",
+      "total": 289.7,
+      "status": "Enviado",
+      "items": 3,
+      "payment": "Pix"
+    }
+  ],
+  "purchase_orders": [
+    {
+      "id": "OC-2001",
+      "supplier": "Suvinil",
+      "date": "2026-09-18",
+      "delivery": "2026-09-24",
+      "status": "Em trânsito",
+      "items": 40,
+      "total": 5400.0
+    },
+    {
+      "id": "OC-2002",
+      "supplier": "Quartzolit",
+      "date": "2026-09-20",
+      "delivery": "2026-09-26",
+      "status": "Rascunho",
+      "items": 24,
+      "total": 3120.0
+    }
+  ],
+  "shipments": [
+    {
+      "id": "ENV-3001",
+      "order": "PED-1003",
+      "carrier": "Correios",
+      "tracking": "BR123456789",
+      "status": "Em trânsito",
+      "sent_at": "2026-09-20"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": 1,
+      "name": "Suvinil",
+      "contact": "Comercial",
+      "lead_time": "5 dias"
+    },
+    {
+      "id": 2,
+      "name": "Quartzolit",
+      "contact": "Distribuidor regional",
+      "lead_time": "6 dias"
+    },
+    {
+      "id": 3,
+      "name": "Colorgin",
+      "contact": "Comercial",
+      "lead_time": "4 dias"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{% from "partials/_macros.html" import icon %}
+{# Menu ÚNICO — igual em todas as páginas. A página atual é destacada. #}
+<header class="site-header">
+    {% include "partials/_logo.html" %}
+
+    <nav aria-label="Menu principal">
+        <a href="{{ url_for('home') }}"{% if request.endpoint == 'home' %} aria-current="page"{% endif %}>Início</a>
+        <a href="{{ url_for('home') }}#empresa">A empresa</a>
+        <a href="{{ url_for('home') }}#recomendador">Recomendador IA</a>
+        <a href="{{ url_for('produtos') }}"{% if request.endpoint == 'produtos' %} aria-current="page"{% endif %}>Produtos</a>
+        <div class="nav-actions">
+            {# Conta do cliente: common.js troca o ícone de entrar pela inicial do nome + botão sair quando há sessão #}
+            <a id="account-link" class="account-btn" href="{{ url_for('login', next=request.path) }}" aria-label="Entrar na sua conta" title="Entrar">{{ icon('user') }}</a>
+            <span id="account-menu" class="account-menu" hidden>
+                <span id="account-avatar" class="account-avatar" role="img"></span>
+                <button type="button" id="logout-button" class="account-btn" aria-label="Sair da conta" title="Sair">{{ icon('log-out') }}</button>
+            </span>
+            <a class="cart-link" href="{{ url_for('checkout') }}"{% if request.endpoint == 'checkout' %} aria-current="page"{% endif %}>
+                Carrinho <span id="cart-count">0</span>
+            </a>
+        </div>
+    </nav>
+</header>

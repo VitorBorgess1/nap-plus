@@ -1,0 +1,196 @@
+[
+  {
+    "id": 1,
+    "name": "Suvinil Fosco Completo",
+    "brand": "Suvinil",
+    "category": "Parede",
+    "finish": "Fosco",
+    "price": 189.9,
+    "stock": 12,
+    "coverage": "Até 350 m² por lata",
+    "description": "Tinta acrílica fosca para paredes, com cobertura e acabamento uniforme.",
+    "image": "https://down-br.img.susercontent.com/file/sg-11134201-7rbmu-lmqfhxvhxwwg8c",
+    "icon": "house",
+    "surface": [
+      "Parede",
+      "Alvenaria"
+    ],
+    "environments": [
+      "Sala",
+      "Quarto",
+      "Fachada"
+    ],
+    "purposes": [
+      "Pintura interna",
+      "Pintura externa",
+      "Mudar a cor"
+    ],
+    "tags": [
+      "tinta para parede",
+      "parede",
+      "fachada",
+      "cor"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Suvinil Toque Fosco Completo",
+    "brand": "Suvinil",
+    "category": "Parede",
+    "finish": "Fosco",
+    "price": 119.9,
+    "stock": 25,
+    "coverage": "Até 250 m² por lata",
+    "description": "Tinta fosca para paredes e tetos, indicada para ambientes internos e externos preparados.",
+    "image": "https://down-br.img.susercontent.com/file/sg-11134201-7rdwc-lxtpae1z8ebq2a",
+    "icon": "sofa",
+    "surface": [
+      "Parede",
+      "Alvenaria"
+    ],
+    "environments": [
+      "Sala",
+      "Quarto"
+    ],
+    "purposes": [
+      "Pintura interna",
+      "Mudar a cor"
+    ],
+    "tags": [
+      "tinta para parede",
+      "parede",
+      "econômica",
+      "cor"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Suvinil Cor & Proteção Fosco",
+    "brand": "Suvinil",
+    "category": "Madeira e Metal",
+    "finish": "Brilhante",
+    "price": 149.9,
+    "stock": 8,
+    "coverage": "Até 70 m² por lata",
+    "description": "Esmalte fosco para madeira e metais, indicado para ambientes internos e externos.",
+    "image": "https://loja.suvinil.com.br/_next/image?q=75&url=https%3A%2F%2Fdigitalprdaddc4dsa.blob.core.windows.net%2Fdigital-products-img%2Fproducts%2F39%2Fimage%2Fdisplay%2F34%2F1.webp%3Fsv%3D2026-02-06%26spr%3Dhttps%26st%3D2026-09-20T01%253A44%253A53Z%26se%3D2026-10-20T01%253A49%253A53Z%26sr%3Db%26sp%3Dr%26sig%3DHWi4qToDn6fGV52LvJUjPF0x3bgmGifWoL9f22ebkvo%253D&w=1920",
+    "icon": "hammer",
+    "surface": [
+      "Madeira",
+      "Metal"
+    ],
+    "environments": [
+      "Portão",
+      "Móveis"
+    ],
+    "purposes": [
+      "Pintar portão",
+      "Pintar móvel",
+      "Retoque"
+    ],
+    "tags": [
+      "madeira",
+      "metal",
+      "portão",
+      "móvel",
+      "esmalte"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Borracha Líquida Elástica Quartzolit",
+    "brand": "Quartzolit",
+    "category": "Piso",
+    "finish": "Acetinado",
+    "price": 169.9,
+    "stock": 6,
+    "coverage": "Até 90 m² por lata",
+    "description": "Impermeabilizante elástico para paredes e fachadas, com proteção contra umidade e chuva.",
+    "image": "https://www.quartzolit.weber/files/br/styles/768x768_resize/public/pictures/2026-01/AF_3D_Borracha_Lquida_3_6kg_PNG_C9D50AD5B9ED4EB183CDD82A02C27D47.jpg.webp?cb=21d84746&itok=EnMGA2VH",
+    "icon": "shield-check",
+    "surface": [
+      "Piso",
+      "Concreto"
+    ],
+    "environments": [
+      "Garagem",
+      "Calçada",
+      "Quadra"
+    ],
+    "purposes": [
+      "Pintar piso",
+      "Alta resistência"
+    ],
+    "tags": [
+      "piso",
+      "garagem",
+      "concreto",
+      "calçada"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Impermeabilizante para Parede",
+    "brand": "Quartzolit",
+    "category": "Tratamento",
+    "finish": "Fosco",
+    "price": 139.9,
+    "stock": 10,
+    "coverage": "Até 60 m² por lata",
+    "description": "Auxilia no tratamento de umidade e proteção de superfícies.",
+    "image": "https://www.quartzolit.weber/files/br/styles/768x768_resize/public/pictures/2026-01/AF_3D_Borracha_Lquida_3_6kg_PNG_C9D50AD5B9ED4EB183CDD82A02C27D47.jpg.webp?cb=21d84746&itok=EnMGA2VH",
+    "icon": "shield-check",
+    "surface": [
+      "Parede",
+      "Alvenaria"
+    ],
+    "environments": [
+      "Banheiro",
+      "Cozinha",
+      "Fachada"
+    ],
+    "purposes": [
+      "Umidade",
+      "Infiltração",
+      "Proteção"
+    ],
+    "tags": [
+      "umidade",
+      "infiltração",
+      "mofo",
+      "impermeabilizante"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Tinta Spray Multiuso",
+    "brand": "Colorgin",
+    "category": "Multiuso",
+    "finish": "Brilhante",
+    "price": 39.9,
+    "stock": 30,
+    "coverage": "Até 2 m² por lata",
+    "description": "Spray para pequenos projetos e objetos diversos.",
+    "image": "https://loja.suvinil.com.br/_next/image?q=75&url=https%3A%2F%2Fdigitalprdaddc4dsa.blob.core.windows.net%2Fdigital-products-img%2Fproducts%2F39%2Fimage%2Fdisplay%2F34%2F1.webp%3Fsv%3D2026-02-06%26spr%3Dhttps%26st%3D2026-09-20T01%253A44%253A53Z%26se%3D2026-10-20T01%253A49%253A53Z%26sr%3Db%26sp%3Dr%26sig%3DHWi4qToDn6fGV52LvJUjPF0x3bgmGifWoL9f22ebkvo%253D&w=1920",
+    "icon": "spray-can",
+    "surface": [
+      "Metal",
+      "Madeira",
+      "Plástico"
+    ],
+    "environments": [
+      "Móveis",
+      "Objetos"
+    ],
+    "purposes": [
+      "Retoque",
+      "Pequenos projetos"
+    ],
+    "tags": [
+      "spray",
+      "multiuso",
+      "retoque",
+      "objetos"
+    ]
+  }
+]

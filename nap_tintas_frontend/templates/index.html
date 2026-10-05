@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import icon %}
+
+{% block meta %}
+    <meta name="description" content="NAP Tintas - cores, proteção e soluções para cada projeto.">
+{% endblock %}
+
+{% block title %}NAP Tintas | Dê vida às suas ideias{% endblock %}
+
+{% block content %}
+    <main>
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="color-pills" aria-hidden="true">
+                    <span class="pill pill-red"></span>
+                    <span class="pill pill-yellow"></span>
+                    <span class="pill pill-blue"></span>
+                    <span class="pill pill-green"></span>
+                </div>
+
+                <p class="eyebrow">NAP TINTAS · COR E PROTEÇÃO</p>
+                <h1>Dê vida às suas <span>ideias.</span></h1>
+                <p class="hero-description">
+                    Tintas, acabamentos e soluções para transformar paredes,
+                    móveis, pisos e todos os seus projetos.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="{{ url_for('produtos') }}">Explorar produtos {{ icon('arrow-right') }}</a>
+                    <a class="btn btn-light" href="#recomendador">Qual tinta eu preciso?</a>
+                </div>
+
+                <div class="hero-highlights">
+                    <span>{{ icon('check') }} Produtos por categoria</span>
+                    <span>{{ icon('check') }} Recomendações personalizadas</span>
+                </div>
+            </div>
+
+            <div class="hero-art" aria-label="Composição colorida representando latas e manchas de tinta">
+                <div class="paint-splash splash-one"></div>
+                <div class="paint-splash splash-two"></div>
+                <div class="paint-splash splash-three"></div>
+
+                <div class="paint-can can-yellow">
+                    <div class="can-lid"></div>
+                    <div class="can-brand" aria-label="NAP Tintas — Amarelo">
+                        <svg class="can-brand-icon" viewBox="0 0 100 100" aria-hidden="true">
+                            <path d="M76.84 10.21 A48 48 0 0 0 35.17 4.35 Q50.64 13.51 52.61 25.14 A25 25 0 0 1 71.20 36.75 Q79.15 28.03 76.84 10.21Z"/>
+                            <path d="M35.17 4.35 A48 48 0 0 0 2.47 43.32 Q17.48 33.43 28.80 36.75 A25 25 0 0 1 52.61 25.14 Q50.64 13.51 35.17 4.35Z"/>
+                            <path d="M2.47 43.32 A48 48 0 0 0 27.47 92.38 Q23.31 74.89 30.30 65.39 A25 25 0 0 1 28.80 36.75 Q17.48 33.43 2.47 43.32Z"/>
+                            <path d="M27.47 92.38 A48 48 0 0 0 71.04 93.14 Q54.45 86.23 50.87 74.98 A25 25 0 0 1 30.30 65.39 Q23.31 74.89 27.47 92.38Z"/>
+                            <path d="M71.04 93.14 A48 48 0 0 0 97.88 53.35 Q83.60 64.26 72.07 61.74 A25 25 0 0 1 50.87 74.98 Q54.45 86.23 71.04 93.14Z"/>
+                            <path d="M97.88 53.35 A48 48 0 0 0 76.84 10.21 Q79.15 28.03 71.20 36.75 A25 25 0 0 1 72.07 61.74 Q83.60 64.26 97.88 53.35Z"/>
+                        </svg>
+                        <span><strong>NAP</strong><small>TINTAS</small></span>
+                    </div>
+                </div>
+
+                <div class="paint-can can-blue">
+                    <div class="can-lid"></div>
+                    <div class="can-brand" aria-label="NAP Tintas — Azul">
+                        <svg class="can-brand-icon" viewBox="0 0 100 100" aria-hidden="true">
+                            <path d="M76.84 10.21 A48 48 0 0 0 35.17 4.35 Q50.64 13.51 52.61 25.14 A25 25 0 0 1 71.20 36.75 Q79.15 28.03 76.84 10.21Z"/>
+                            <path d="M35.17 4.35 A48 48 0 0 0 2.47 43.32 Q17.48 33.43 28.80 36.75 A25 25 0 0 1 52.61 25.14 Q50.64 13.51 35.17 4.35Z"/>
+                            <path d="M2.47 43.32 A48 48 0 0 0 27.47 92.38 Q23.31 74.89 30.30 65.39 A25 25 0 0 1 28.80 36.75 Q17.48 33.43 2.47 43.32Z"/>
+                            <path d="M27.47 92.38 A48 48 0 0 0 71.04 93.14 Q54.45 86.23 50.87 74.98 A25 25 0 0 1 30.30 65.39 Q23.31 74.89 27.47 92.38Z"/>
+                            <path d="M71.04 93.14 A48 48 0 0 0 97.88 53.35 Q83.60 64.26 72.07 61.74 A25 25 0 0 1 50.87 74.98 Q54.45 86.23 71.04 93.14Z"/>
+                            <path d="M97.88 53.35 A48 48 0 0 0 76.84 10.21 Q79.15 28.03 71.20 36.75 A25 25 0 0 1 72.07 61.74 Q83.60 64.26 97.88 53.35Z"/>
+                        </svg>
+                        <span><strong>NAP</strong><small>TINTAS</small></span>
+                    </div>
+                </div>
+
+                <div class="paint-can can-pink">
+                    <div class="can-lid"></div>
+                    <div class="can-brand" aria-label="NAP Tintas — Rosa">
+                        <svg class="can-brand-icon" viewBox="0 0 100 100" aria-hidden="true">
+                            <path d="M76.84 10.21 A48 48 0 0 0 35.17 4.35 Q50.64 13.51 52.61 25.14 A25 25 0 0 1 71.20 36.75 Q79.15 28.03 76.84 10.21Z"/>
+                            <path d="M35.17 4.35 A48 48 0 0 0 2.47 43.32 Q17.48 33.43 28.80 36.75 A25 25 0 0 1 52.61 25.14 Q50.64 13.51 35.17 4.35Z"/>
+                            <path d="M2.47 43.32 A48 48 0 0 0 27.47 92.38 Q23.31 74.89 30.30 65.39 A25 25 0 0 1 28.80 36.75 Q17.48 33.43 2.47 43.32Z"/>
+                            <path d="M27.47 92.38 A48 48 0 0 0 71.04 93.14 Q54.45 86.23 50.87 74.98 A25 25 0 0 1 30.30 65.39 Q23.31 74.89 27.47 92.38Z"/>
+                            <path d="M71.04 93.14 A48 48 0 0 0 97.88 53.35 Q83.60 64.26 72.07 61.74 A25 25 0 0 1 50.87 74.98 Q54.45 86.23 71.04 93.14Z"/>
+                            <path d="M97.88 53.35 A48 48 0 0 0 76.84 10.21 Q79.15 28.03 71.20 36.75 A25 25 0 0 1 72.07 61.74 Q83.60 64.26 97.88 53.35Z"/>
+                        </svg>
+                        <span><strong>NAP</strong><small>TINTAS</small></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="empresa" class="section company-section">
+            <div class="section-heading">
+                <p class="eyebrow">SOBRE A NAP TINTAS</p>
+                <h2>Uma história construída pincelada a pincelada.</h2>
+                <p>Mais de duas décadas de experiência no mercado de tintas deram origem a uma empresa feita para estar perto das pessoas.</p>
+            </div>
+
+            <div class="company-story">
+                <div class="company-story-text">
+                    <p>A NAP Tintas foi construída pincelada a pincelada. São mais de duas décadas percorrendo o mercado de tintas, passando por empresas que nos moldaram e por pessoas que nos inspiraram. Chegou o momento em que todos esses aprendizados se encontraram e formaram a cor que sempre quisemos ver: a nossa própria organização.</p>
+                    <p>Somos uma empresa de família, com alma de vizinhança. Acreditamos que transformar um ambiente começa com uma boa conversa, um atendimento de verdade e a escolha da cor certa.</p>
+                </div>
+
+                <div class="company-purpose">
+                    <span class="card-number">NOSSO PROPÓSITO</span>
+                    <p>“Colorir sonhos, identificando a necessidade e o desejo de cada cliente. Com atendimento humano, especificação correta e capacitação de profissionais.”</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="recomendador" class="section recommender-section">
+            <div class="section-heading">
+                <p class="eyebrow">NAP INTELIGENTE</p>
+                <h2>Qual produto combina com o seu projeto?</h2>
+                <p>Conte o que você deseja pintar ou qual problema precisa resolver.</p>
+            </div>
+
+            <div class="ai-box">
+                <div class="ai-heading">
+                    <span class="ai-bubble">{{ icon('sparkles') }}</span>
+                    <div>
+                        <h3>Assistente de produtos</h3>
+                        <p>Uma primeira recomendação para orientar sua escolha.</p>
+                    </div>
+                </div>
+
+                <textarea id="problem-input"
+                    placeholder="Ex.: Quero pintar uma parede externa que apresenta umidade..."
+                    maxlength="600"></textarea>
+
+                <button id="recommend-btn" class="btn btn-primary">Encontrar produtos {{ icon('arrow-right') }}</button>
+                <div id="recommendations" class="recommendations"></div>
+            </div>
+        </section>
+
+        <section class="section cta-section">
+            <div>
+                <p class="eyebrow">SEU PRÓXIMO PROJETO</p>
+                <h2>Mais cor. Mais possibilidades.</h2>
+            </div>
+            <a class="btn btn-primary" href="{{ url_for('produtos') }}">Ver catálogo completo {{ icon('arrow-right') }}</a>
+        </section>
+    </main>
+{% endblock %}
+
+{% block footer %}
+    <footer class="site-footer">
+        {% include "partials/_logo.html" %}
+        <span>Projeto NAP+ · Plataforma web</span>
+    </footer>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
