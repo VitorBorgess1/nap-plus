@@ -1,7 +1,8 @@
 /* ============================================================
-   APP.JS — página inicial (recomendador de produtos)
-   Depende de common.js (icon, updateCartCount...)
+   APP.JS — página inicial (assistente inteligente NAP+)
    ============================================================ */
+
+let aiHistory = [];
 
 async function getRecommendations() {
     const input = document.getElementById("problem-input");
@@ -11,47 +12,135 @@ async function getRecommendations() {
     if (!input || !result || !button) return;
 
     button.addEventListener("click", async () => {
-        const problem = input.value.trim();
+        const message = input.value.trim();
 
-        if (!problem) {
-            result.innerHTML = "<p>Descreva sua necessidade primeiro.</p>";
+        if (!message) {
+            result.innerHTML = `
+                <div class="ai-response">
+                    <p>Descreva sua necessidade primeiro.</p>
+                </div>
+            `;
             return;
         }
 
         button.disabled = true;
         button.textContent = "Analisando...";
 
+        result.innerHTML = `
+            <div class="ai-response">
+                <p>Pensando na melhor recomendação...</p>
+            </div>
+        `;
+
         try {
-            const response = await fetch("/api/recommend", {
+            const response = await fetch("/api/ai/chat", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({problem})
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: message,
+                    history: aiHistory
+                })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || "Erro ao recomendar.");
+                throw new Error(
+                    data.message || "Erro ao consultar a assistente."
+                );
             }
 
-            result.innerHTML = data.recommendations.length
-                ? data.recommendations.map(product => `
+            // Guarda o histórico da conversa
+            aiHistory.push({
+                role: "user",
+                text: message
+            });
+
+            if (data.message) {
+                aiHistory.push({
+                    role: "assistant",
+                    text: data.message
+                });
+            }
+
+            let html = "";
+
+            // ====================================================
+            // RESPOSTA DA IA
+            // ====================================================
+
+            if (data.message) {
+                html += `
+                    <div class="ai-response">
+                        <p>${data.message}</p>
+                    </div>
+                `;
+            }
+
+            // ====================================================
+            // PRODUTOS RECOMENDADOS
+            // ====================================================
+
+            const products = data.products || [];
+
+            if (products.length) {
+                html += products.map(product => `
                     <article class="mini-product">
-                        <small>${product.brand} · ${product.category}</small>
+                        <small>
+                            ${product.brand} · ${product.category}
+                        </small>
+
                         <h3>${product.name}</h3>
+
                         <p>${product.description}</p>
-                        <strong>R$ ${product.price.toFixed(2).replace(".", ",")}</strong>
+
+                        <strong>
+                            R$ ${Number(product.price)
+                                .toFixed(2)
+                                .replace(".", ",")}
+                        </strong>
                     </article>
-                `).join("")
-                : "<p>Nenhum produto disponível foi encontrado.</p>";
+                `).join("");
+            }
+
+            // Caso a IA não tenha retornado absolutamente nada
+            if (!html) {
+                html = `
+                    <div class="ai-response">
+                        <p>
+                            Não encontrei uma recomendação para essa necessidade.
+                            Tente descrever melhor o que você deseja pintar.
+                        </p>
+                    </div>
+                `;
+            }
+
+            result.innerHTML = html;
+
+            // Limpa o campo depois da pergunta
+            input.value = "";
 
         } catch (error) {
-            result.innerHTML = `<p>${error.message}</p>`;
+
+            result.innerHTML = `
+                <div class="ai-response">
+                    <p>${error.message}</p>
+                </div>
+            `;
+
         } finally {
+
             button.disabled = false;
-            button.innerHTML = `Encontrar produtos ${icon("arrow-right")}`;
+
+            button.innerHTML =
+                `Encontrar produtos ${icon("arrow-right")}`;
         }
     });
 }
 
-document.addEventListener("DOMContentLoaded", getRecommendations);
+document.addEventListener(
+    "DOMContentLoaded",
+    getRecommendations
+);

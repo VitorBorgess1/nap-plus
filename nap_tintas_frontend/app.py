@@ -1,6 +1,20 @@
 from flask import Flask, render_template, request, jsonify
+# --- INÍCIO integração IA NAP+ ---
+# Módulos padrão do Python (nenhuma dependência nova em requirements.txt)
+# usados só para encaminhar a mensagem ao serviço Node da IA-NAP.
+import os
+import json
+import urllib.request
+import urllib.error
+# --- FIM integração IA NAP+ ---
 
 app = Flask(__name__)
+
+# --- INÍCIO integração IA NAP+ ---
+# Endereço do serviço Node.js da IA (IA-NAP/server.js). Pode ser trocado
+# por variável de ambiente sem precisar alterar este arquivo.
+NAP_AI_URL = os.environ.get("NAP_AI_URL", "http://127.0.0.1:3001/api/chat")
+# --- FIM integração IA NAP+ ---
 
 # ============================================================
 # CAMADA DE DADOS TEMPORÁRIA
@@ -439,6 +453,50 @@ def recommend():
         "message": "Recomendações geradas pelo protótipo.",
         "recommendations": recommendations[:4]
     })
+
+
+# --- INÍCIO integração IA NAP+ ---
+# ============================================================
+# API - IA NAP+ (assistente inteligente de vendas)
+# ------------------------------------------------------------
+# Este endpoint NÃO reimplementa a IA: ele só repassa a mensagem
+# do cliente para o serviço Node.js isolado em IA-NAP/ (que fala
+# com o Gemini) e devolve a resposta para o frontend.
+# A chave do Gemini nunca passa por aqui nem pelo navegador.
+# O endpoint /api/recommend acima foi mantido intacto.
+# ============================================================
+
+@app.post("/api/ai/chat")
+def ai_chat():
+    data = request.get_json(silent=True) or {}
+    payload = json.dumps({
+        "message": data.get("message", ""),
+        "history": data.get("history", []),
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        NAP_AI_URL,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            body = response.read()
+            return jsonify(json.loads(body)), response.status
+    except urllib.error.HTTPError as e:
+        # O serviço da IA respondeu com um erro (ex.: chave do Gemini ausente).
+        try:
+            return jsonify(json.loads(e.read())), e.code
+        except Exception:
+            return jsonify({"message": "A assistente inteligente está indisponível no momento."}), e.code
+    except urllib.error.URLError:
+        # Serviço da IA (Node) fora do ar.
+        return jsonify({
+            "message": "A assistente inteligente está offline no momento. "
+                        "Verifique se o serviço IA-NAP está rodando (veja IA-NAP/README.md)."
+        }), 503
+# --- FIM integração IA NAP+ ---
 
 
 # ============================================================
