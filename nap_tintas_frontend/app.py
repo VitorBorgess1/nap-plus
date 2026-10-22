@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from supabase import create_client
 # --- INÍCIO integração IA NAP+ ---
 # Módulos padrão do Python (nenhuma dependência nova em requirements.txt)
 # usados só para encaminhar a mensagem ao serviço Node da IA-NAP.
@@ -10,6 +11,13 @@ import urllib.error
 
 app = Flask(__name__)
 
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+supabase = None
+
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # --- INÍCIO integração IA NAP+ ---
 # Endereço do serviço Node.js da IA (IA-NAP/server.js). Pode ser trocado
 # por variável de ambiente sem precisar alterar este arquivo.
