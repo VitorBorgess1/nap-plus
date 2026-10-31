@@ -17,8 +17,11 @@ const config = {
     .split(",")            // separa a lista por vírgula
     .map((o) => o.trim())  // tira espaços
     .filter(Boolean),      // remove itens vazios
-  // De onde vêm os produtos: "json" (agora) ou "supabase" (futuro).
+  // De onde vêm os produtos: "json" (arquivo local) ou "supabase" (banco).
   productsSource: process.env.PRODUCTS_SOURCE || "json",
+  // Supabase (usado só quando PRODUCTS_SOURCE=supabase). A chave publishable basta: a IA só lê.
+  supabaseUrl: process.env.SUPABASE_URL || "",
+  supabaseKey: process.env.SUPABASE_KEY || "",
   // Arquivo de produtos: por padrão usa o MESMO data/products.json do site (estoque sempre atual).
   productsFile:
     process.env.PRODUCTS_FILE || path.join(__dirname, "..", "data", "products.json"),
