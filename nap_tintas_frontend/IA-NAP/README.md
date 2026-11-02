@@ -114,23 +114,20 @@ Outras mensagens para testar:
 Ou pela própria interface: rode os dois servidores e acesse
 `http://127.0.0.1:5000` → seção **NAP INTELIGENTE**.
 
-## Migrar de `products.json` para Supabase (futuro)
+## Produtos do Supabase
 
-A IA nunca lê `products.json` diretamente — ela sempre passa por
-`product-repository.js`. Quando o Supabase estiver pronto:
+A IA lê o catálogo por `product-repository.js`. Para usar o banco em vez do JSON, no `.env`:
 
-1. Crie uma classe nova em `product-repository.js`, por exemplo
-   `SupabaseProductRepository`, com os mesmos métodos `listAll()` e
-   `getById(id)` que `JsonProductRepository` já tem hoje.
-2. Na função `createProductRepository`, adicione um `if` para
-   `config.productsSource === "supabase"` retornando essa nova classe.
-3. No `.env`, troque `PRODUCTS_SOURCE=json` por `PRODUCTS_SOURCE=supabase`
-   e adicione as credenciais do Supabase (URL e chave) em novas variáveis.
+```
+PRODUCTS_SOURCE=supabase
+SUPABASE_URL=https://yjutulguurvilgbbfhab.supabase.co
+SUPABASE_KEY=sb_publishable_...   # chave publishable: a IA só lê
+```
 
-**Nenhum outro arquivo precisa mudar** — `nap-ai.js`, `product-search.js`,
-`prompts.js`, `server.js` e o `app.py` continuam exatamente iguais, porque
-todos dependem apenas da interface do repositório (`listAll`/`getById`), não
-de como os dados são armazenados.
+O `SupabaseProductRepository` consulta `produtos` + `estoque` (só produtos `ativo`),
+converte os nomes em português para o formato do `products.json` e guarda o
+resultado em cache por 30 s. Se o banco cair, continua usando o último catálogo
+carregado. Com `PRODUCTS_SOURCE=json` (padrão), tudo funciona como antes.
 
 ## Integração com o site
 

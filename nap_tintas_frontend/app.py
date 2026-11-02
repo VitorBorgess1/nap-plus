@@ -1,5 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 from supabase import create_client
+import catalog
+
+try:  # lê o .env local (em produção as variáveis vêm do painel do Render)
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 # --- INÍCIO integração IA NAP+ ---
 # Módulos padrão do Python (nenhuma dependência nova em requirements.txt)
 # usados só para encaminhar a mensagem ao serviço Node da IA-NAP.
@@ -147,6 +154,7 @@ PRODUCTS = [
 from pathlib import Path
 import json
 import re
+import time
 from datetime import datetime
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -173,6 +181,55 @@ if PRODUCTS_FILE.exists():
     PRODUCTS = _load_json(PRODUCTS_FILE, PRODUCTS)
 else:
     _save_json(PRODUCTS_FILE, PRODUCTS)
+
+# ------------------------------------------------------------
+# Supabase: se SUPABASE_URL/SUPABASE_KEY existirem, o catálogo vem do banco.
+# Sem elas, o site continua funcionando com data/products.json.
+# ------------------------------------------------------------
+_CACHE_SECONDS = 30
+_last_refresh = 0.0
+
+
+def _refresh_products(force=False):
+    """Recarrega o catálogo do Supabase (no máximo a cada 30 s)."""
+    global _last_refresh
+    if not supabase:
+        return
+    now = time.time()
+    if not force and now - _last_refresh < _CACHE_SECONDS:
+        return
+    try:
+        PRODUCTS[:] = catalog.fetch_products(supabase)
+        _last_refresh = now
+    except Exception as exc:  # banco fora do ar/pausado: mantém o último catálogo
+        app.logger.warning("Falha ao ler catálogo do Supabase: %s", exc)
+
+
+def _persist_product(product):
+    if supabase:
+        catalog.save_product(supabase, product)
+    else:
+        _save_json(PRODUCTS_FILE, PRODUCTS)
+
+
+@app.errorhandler(Exception)
+def _api_error(exc):
+    """Falha de banco nas rotas /api vira JSON legível em vez de página 500."""
+    from werkzeug.exceptions import HTTPException
+    if isinstance(exc, HTTPException):
+        return exc
+    app.logger.exception("Erro na requisição")
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Não foi possível acessar o banco de dados. Tente novamente."}), 503
+    raise exc
+
+
+@app.before_request
+def _sync_catalog():
+    _refresh_products()
+
+
+_refresh_products(force=True)
 
 ADMIN_DATA = _load_json(ADMIN_FILE, {
     "orders": [
@@ -252,7 +309,11 @@ def admin_create_product():
         "icon":data.get("icon","paint-roller"),"surface":data.get("surface",[]),"environments":data.get("environments",[]),
         "purposes":data.get("purposes",[]),"tags":data.get("tags",[])
     }
-    PRODUCTS.append(product); _save_json(PRODUCTS_FILE, PRODUCTS)
+    if supabase:
+        product["id"]=catalog.create_product(supabase, product)
+        PRODUCTS.append(product)
+    else:
+        PRODUCTS.append(product); _save_json(PRODUCTS_FILE, PRODUCTS)
     return jsonify(product),201
 
 
@@ -266,7 +327,7 @@ def admin_update_product(product_id):
     for key in ["price"]:
         if key in data: product[key]=float(data[key])
     if "stock" in data: product["stock"]=max(0,int(data["stock"]))
-    _save_json(PRODUCTS_FILE, PRODUCTS)
+    _persist_product(product)
     return jsonify(product)
 
 
@@ -276,16 +337,16 @@ def admin_adjust_stock(product_id):
     if not product: return jsonify({"error":"Produto não encontrado."}),404
     data=request.get_json(silent=True) or {}
     delta=int(data.get("delta",0)); product["stock"]=max(0,int(product.get("stock",0))+delta)
-    _save_json(PRODUCTS_FILE, PRODUCTS)
+    _persist_product(product)
     return jsonify(product)
 
 
 @app.delete("/api/admin/products/<int:product_id>")
 def admin_delete_product(product_id):
-    global PRODUCTS
-    before=len(PRODUCTS); PRODUCTS=[p for p in PRODUCTS if p["id"]!=product_id]
+    before=len(PRODUCTS); PRODUCTS[:]=[p for p in PRODUCTS if p["id"]!=product_id]
     if len(PRODUCTS)==before: return jsonify({"error":"Produto não encontrado."}),404
-    _save_json(PRODUCTS_FILE, PRODUCTS)
+    if supabase: catalog.deactivate_product(supabase, product_id)
+    else: _save_json(PRODUCTS_FILE, PRODUCTS)
     return jsonify({"success":True})
 
 
