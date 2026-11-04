@@ -17,8 +17,18 @@ const config = {
     .split(",")            // separa a lista por vírgula
     .map((o) => o.trim())  // tira espaços
     .filter(Boolean),      // remove itens vazios
-  // De onde vêm os produtos: "json" (agora) ou "supabase" (futuro).
+  // De onde vêm os produtos: "json" (arquivo local) ou "supabase" (banco de dados).
   productsSource: process.env.PRODUCTS_SOURCE || "json",
+  // Credenciais do Supabase (usadas só quando PRODUCTS_SOURCE=supabase). Ficam SOMENTE no .env.
+  // Aceita a URL com ou sem barra no final e com ou sem "/rest/v1" (o painel do Supabase mostra as duas formas).
+  supabaseUrl: (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, ""),
+  supabaseKey: process.env.SUPABASE_KEY || "",
+  // Nome da tabela de produtos no Supabase.
+  supabaseTable: process.env.SUPABASE_TABLE || "products",
+  // Tabela onde fica a quantidade em estoque (colunas "produto_id" e "quantidade"). Deixe vazio para ler o estoque da própria tabela de produtos.
+  supabaseStockTable: process.env.SUPABASE_STOCK_TABLE ?? "estoque",
+  // Por quantos segundos reaproveitar a lista de produtos (0 = sempre buscar do Supabase).
+  supabaseCacheSeconds: Number(process.env.SUPABASE_CACHE_SECONDS ?? 10),
   // Arquivo de produtos: por padrão usa o MESMO data/products.json do site (estoque sempre atual).
   productsFile:
     process.env.PRODUCTS_FILE || path.join(__dirname, "..", "data", "products.json"),

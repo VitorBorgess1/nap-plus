@@ -26,7 +26,9 @@ function parseJsonText(text) {
 }
 
 // Cria o cliente. "fetchImpl" permite trocar o fetch nos testes (sem chamar a internet).
-function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 45000, fetchImpl = fetch }) {
+// timeoutMs: desiste de uma chamada travada após 20s (para o modelo reserva assumir logo).
+// retryDelayMs: espera antes de tentar de novo quando o Gemini está sobrecarregado (503) ou com limite (429).
+function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 20000, retryDelayMs = 1500, fetchImpl = fetch }) {
   // Faz UMA chamada a UM modelo.
   async function callModel(modelName, { system, contents, temperature, schema }) {
     const controller = new AbortController(); // permite cancelar se demorar demais
@@ -71,6 +73,18 @@ function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 45000, f
     }
   }
 
+  // Chamada ao modelo principal com UMA nova tentativa se ele estiver sobrecarregado (picos de demanda são passageiros).
+  async function callWithRetry(modelName, args) {
+    try {
+      return await callModel(modelName, args);
+    } catch (err) {
+      if (err.status !== 503 && err.status !== 429) throw err;
+      console.warn(`[IA-NAP] Modelo "${modelName}" sobrecarregado (HTTP ${err.status}); tentando de novo...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      return await callModel(modelName, args);
+    }
+  }
+
   // Só vale tentar o modelo reserva quando o erro pode ser do modelo/capacidade (não de chave inválida).
   const canFallback = (err) => !err.status || [404, 408, 429, 500, 502, 503, 504].includes(err.status);
 
@@ -79,7 +93,7 @@ function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 45000, f
     async generateJson({ system, contents, temperature = 0.2, schema }) {
       if (!apiKey) throw new GeminiError("GEMINI_API_KEY não configurada no .env da IA-NAP.", 503);
       try {
-        return await callModel(model, { system, contents, temperature, schema });
+        return await callWithRetry(model, { system, contents, temperature, schema });
       } catch (err) {
         // [DIAGNÓSTICO] Mostra no terminal (npm start) a causa real do erro do Gemini
         // (ex.: "HTTP 404" = nome de modelo inválido/sem acesso, "HTTP 429" = cota excedida).

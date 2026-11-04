@@ -46,9 +46,10 @@ function normalizeNeed(raw, vocabulary) {
     arr(list).map((x) => known.find((k) => normalizeText(k) === normalizeText(x))).filter(Boolean);
   const hints = r.catalog_hints || {};
   const budgetNum = Number(r.budget);
-  return {
+  const need = {
     intent: ["product_recommendation", "greeting", "out_of_scope"].includes(r.intent) ? r.intent : "product_recommendation",
     problem: str(r.problem),
+    product_name: str(r.product_name),
     environment: str(r.environment),
     environment_type: ["interno", "externo"].includes(r.environment_type) ? r.environment_type : null,
     surface: str(r.surface),
@@ -70,6 +71,12 @@ function normalizeNeed(raw, vocabulary) {
     needs_more_information: r.needs_more_information === true,
     question: str(r.question),
   };
+  // Trava: se o cliente já deu um dado que identifica produtos (problema, nome do produto ou termos que existem no
+  // catálogo), a IA recomenda direto. Modelos mais simples às vezes pedem "mais informações" sem necessidade.
+  const h = need.catalog_hints;
+  const hasSpecifics = Boolean(need.problem || need.product_name || h.categories.length || h.purposes.length || h.tags.length);
+  if (need.needs_more_information && hasSpecifics) need.needs_more_information = false;
+  return need;
 }
 
 // Dados enxutos de um produto que vão para o Gemini (só o que ele precisa para explicar).
@@ -78,6 +85,8 @@ function toFacts(entry) {
   return {
     id: p.id, name: p.name, brand: p.brand, category: p.category, finish: p.finish,
     price: p.price, price_text: brl(p.price), coverage: p.coverage, description: p.description,
+    stock_units: p.stock, surface: p.surface, tags: p.tags,
+    details: p.details, // colunas extras do Supabase (ex.: secagem, diluição, cores...)
     environments: p.environments, purposes: p.purposes,
     compatibility: entry.compatibility, match_reasons: entry.reasons, notes: entry.notes,
     within_budget: entry.within_budget,
@@ -124,7 +133,7 @@ function parseMoney(raw) {
 function pricesAreValid(message, allowedNumbers) {
   const found = [...String(message).matchAll(/R\$\s*([\d.,]+)/g)]; // acha todos os valores em reais
   return found.every((m) => {
-    const value = parseMoney(m[1]);
+    const value = parseMoney(m[1].replace(/[.,]+$/, "")); // tira a pontuação da frase colada no número ("139,90," -> "139,90")
     return allowedNumbers.some((a) => Math.abs(a - value) < 0.005); // precisa bater com um preço/orçamento real
   });
 }
@@ -165,6 +174,11 @@ function createNapAI({ llm, repository, config }) {
         };
       }
 
+      // Trava: orçamento só vale se o CLIENTE citou um valor. Modelos menores às vezes "pegam" um preço do histórico
+      // (que inclui as respostas da própria IA) e passam a dizer que o produto "passa do orçamento" sem o cliente ter falado nada.
+      const userSaid = [...cleanHistory.filter((m) => m.role === "user").map((m) => m.text), text].join(" ");
+      if (need.budget !== null && !/\d|\bmil\b/i.test(userSaid)) need.budget = null;
+
       const base = { need, products: [], unavailable: [], intent: need.intent, needs_more_information: false };
 
       // Assunto fora do contexto: resposta fixa, sem consultar catálogo.
@@ -181,7 +195,9 @@ function createNapAI({ llm, repository, config }) {
 
       // Limitações conhecidas (informadas ao cliente de forma honesta).
       const limitations = [];
-      const catalogHasColors = products.some((p) => p.color || p.colors); // catálogo tem cor?
+      // catálogo tem cor? (coluna "color"/"colors" ou uma coluna extra chamada cor/cores no Supabase)
+      const hasColor = (p) => p.color || p.colors || Object.keys(p.details || {}).some((k) => ["cor", "cores", "color", "colors"].includes(normalizeText(k)));
+      const catalogHasColors = products.some(hasColor);
       if (need.color && !catalogHasColors) limitations.push(COLOR_LIMITATION);
       if (found.budget !== null && found.available.length && found.available.every((a) => a.within_budget === false)) {
         limitations.push(`Nenhuma das opções disponíveis compatíveis custa até ${brl(found.budget)} por unidade.`);
@@ -212,13 +228,17 @@ function createNapAI({ llm, repository, config }) {
         });
         messageText = typeof out?.message === "string" ? out.message.trim() : "";
         // Só aceita ids que existem entre os DISPONÍVEIS (o Gemini não consegue "criar" produto).
-        const ids = Array.isArray(out?.recommended_ids) ? out.recommended_ids.map(Number) : [];
-        const picked = ids.map((id) => found.available.find((a) => a.product.id === id)).filter(Boolean);
+        const ids = Array.isArray(out?.recommended_ids) ? out.recommended_ids.map(String) : [];
+        const picked = ids.map((id) => found.available.find((a) => String(a.product.id) === id)).filter(Boolean);
         if (picked.length) chosen = picked;
         // Guarda anti-invenção de preços.
         const allowed = [...found.available, ...found.unavailable].map((a) => a.product.price);
         if (found.budget !== null) allowed.push(found.budget);
-        if (!messageText || !pricesAreValid(messageText, allowed)) messageText = buildFallbackMessage(result);
+        if (!messageText || !pricesAreValid(messageText, allowed)) {
+          // Avisa no terminal POR QUE a resposta do Gemini foi descartada (facilita o diagnóstico).
+          console.warn("[IA-NAP] Resposta do Gemini descartada (vazia ou com preço que não bate com o cadastro):", JSON.stringify(messageText));
+          messageText = buildFallbackMessage(result);
+        }
       } catch (err) {
         console.warn("[IA-NAP] Etapa 2 falhou, usando mensagem padrão:", err.message); // não derruba o atendimento
         messageText = buildFallbackMessage(result);

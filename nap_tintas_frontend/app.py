@@ -489,7 +489,7 @@ def ai_chat():
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=90) as response:  # a IA faz 2 chamadas ao Gemini; 30s era pouco
             body = response.read()
             return jsonify(json.loads(body)), response.status
     except urllib.error.HTTPError as e:
@@ -504,6 +504,13 @@ def ai_chat():
             "message": "A assistente inteligente está offline no momento. "
                         "Verifique se o serviço IA-NAP está rodando (veja IA-NAP/README.md)."
         }), 503
+    except TimeoutError:
+        # A IA demorou demais para responder.
+        return jsonify({"message": "A assistente demorou demais para responder. Tente novamente em instantes."}), 504
+    except Exception as e:
+        # Qualquer outro erro: devolve JSON (e não a página HTML de erro) para o site mostrar uma mensagem amigável.
+        print("[Flask] Erro ao falar com a IA-NAP:", repr(e))
+        return jsonify({"message": "A assistente inteligente está indisponível no momento."}), 502
 # --- FIM integração IA NAP+ ---
 
 

@@ -49,6 +49,9 @@ function countMatches(wanted, field) {
 const EXTERNAL_WORDS = ["externa", "externo", "fachada", "calcada", "garagem", "quadra", "portao"];
 const INTERNAL_WORDS = ["interna", "interno", "sala", "quarto", "banheiro", "cozinha"];
 
+// Palavras comuns que não ajudam a identificar um produto pelo nome.
+const GENERIC_WORDS = ["tinta", "para", "de", "da", "do", "com", "uma", "um", "the"];
+
 // Calcula a pontuação de compatibilidade de UM produto com a necessidade do cliente.
 function scoreProduct(product, need) {
   const hints = need.catalog_hints || {};
@@ -95,6 +98,19 @@ function scoreProduct(product, need) {
   if (textHits) {
     score += textHits;
     reasons.push("descrição menciona o assunto");
+  }
+  // Produto citado pelo nome: +10 (nome igual/contido) ou +8 (todas as palavras do pedido estão no nome).
+  if (need.product_name) {
+    const asked = normalizeText(need.product_name);
+    const nameText = normalizeText(product.name);
+    const words = asked.split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !GENERIC_WORDS.includes(w));
+    if (termsMatch(asked, nameText)) {
+      score += 10;
+      reasons.push("nome do produto citado pelo cliente");
+    } else if (words.length && words.every((w) => nameText.includes(w))) {
+      score += 8;
+      reasons.push("nome do produto citado pelo cliente");
+    }
   }
   // Marca pedida: +3
   if (need.brand && termsMatch(need.brand, product.brand)) {
