@@ -14,6 +14,7 @@ import os
 import json
 import urllib.request
 import urllib.error
+import math
 # --- FIM integração IA NAP+ ---
 
 app = Flask(__name__)
@@ -295,26 +296,66 @@ def admin_products():
     return jsonify(PRODUCTS)
 
 
+
 @app.post("/api/admin/products")
 def admin_create_product():
-    data=request.get_json(silent=True) or {}
-    required=["name","brand","category","price","stock"]
-    if any(data.get(k) in [None,""] for k in required):
-        return jsonify({"error":"Preencha nome, marca, categoria, preço e estoque."}),400
-    new_id=max([int(p.get("id",0)) for p in PRODUCTS] or [0])+1
-    product={
-        "id":new_id,"name":data["name"].strip(),"brand":data["brand"].strip(),"category":data["category"],
-        "finish":data.get("finish","Fosco"),"price":float(data["price"]),"stock":max(0,int(data["stock"])),
-        "coverage":data.get("coverage",""),"description":data.get("description","").strip(),"image":data.get("image",""),
-        "icon":data.get("icon","paint-roller"),"surface":data.get("surface",[]),"environments":data.get("environments",[]),
-        "purposes":data.get("purposes",[]),"tags":data.get("tags",[])
+    data = request.get_json(silent=True) or {}
+    required = ["name", "brand", "category", "price", "stock"]
+    if any(data.get(k) in [None, ""] for k in required):
+        return jsonify({
+            "error": "Preencha nome, marca, categoria, preço e estoque."
+        }), 400
+    try:
+        price = float(data["price"])
+        stock = int(data["stock"])
+
+        if not math.isfinite(price) or price < 0 or stock < 0:
+            return jsonify({
+                "error": "Preço e estoque devem ser valores válidos e não negativos."
+            }), 400
+        name = data["name"].strip()
+        brand = data["brand"].strip()
+        if not name or not brand:
+            return jsonify({
+                "error": "Nome e marca não podem estar vazios."
+            }), 400
+    except (ValueError, TypeError, AttributeError):
+        return jsonify({
+            "error": "Dados inválidos. Verifique nome, marca, preço e estoque."
+        }), 400
+    new_id = max(
+        [int(p.get("id", 0)) for p in PRODUCTS] or [0]
+    ) + 1
+    product = {
+        "id": new_id,
+        "name": name,
+        "brand": brand,
+        "category": data["category"],
+        "finish": data.get("finish", "Fosco"),
+        "price": price,
+        "stock": stock,
+        "coverage": data.get("coverage", ""),
+        "description": data.get("description", "").strip(),
+        "image": data.get("image", ""),
+        "icon": data.get("icon", "paint-roller"),
+        "surface": data.get("surface", []),
+        "environments": data.get("environments", []),
+        "purposes": data.get("purposes", []),
+        "tags": data.get("tags", [])
     }
     if supabase:
-        product["id"]=catalog.create_product(supabase, product)
-        PRODUCTS.append(product)
+        try:
+            product["id"] = catalog.create_product(supabase, product)
+        except Exception:
+            app.logger.exception("Erro ao cadastrar produto no Supabase")
+            return jsonify({
+                "error": "Não foi possível cadastrar o produto no banco."
+            }), 500
     else:
-        PRODUCTS.append(product); _save_json(PRODUCTS_FILE, PRODUCTS)
-    return jsonify(product),201
+        _save_json(PRODUCTS_FILE, PRODUCTS + [product])
+    PRODUCTS.append(product)
+    return jsonify(product), 201
+
 
 
 @app.put("/api/admin/products/<int:product_id>")
