@@ -95,12 +95,22 @@ class SupabaseProductRepository {
 // Fábrica: decide qual repositório usar conforme PRODUCTS_SOURCE no .env.
 function createProductRepository(config) {
   if (config.productsSource === "json") {
-    return new JsonProductRepository(config.productsFile, config.productsTestFile);
+    return new JsonProductRepository(
+      config.productsFile,
+      config.productsTestFile
+    );
   }
+
   if (config.productsSource === "supabase") {
-    return new SupabaseProductRepository(config.supabaseUrl, config.supabaseKey);
+    return new SupabaseProductRepository(
+      config.supabaseUrl,
+      config.supabaseKey
+    );
   }
-  throw new Error(`PRODUCTS_SOURCE="${config.productsSource}" inválido. Use "json" ou "supabase".`);
+
+  throw new Error(
+    `PRODUCTS_SOURCE="${config.productsSource}" inválido. Use "json" ou "supabase".`
+  );
 }
 
 module.exports = {
