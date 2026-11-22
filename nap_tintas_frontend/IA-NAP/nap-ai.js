@@ -4,6 +4,7 @@
 
 const { buildVocabulary, searchProducts, normalizeText } = require("./product-search");
 const { buildInterpretSystem, RESPOND_SYSTEM, INTERPRET_SCHEMA, RESPOND_SCHEMA } = require("./prompts");
+const { cleanDescription } = require("./product-text"); // tira anotações internas da descrição antes de chegar ao cliente
 
 // Textos fixos (não dependem do Gemini => sempre seguros).
 const REDIRECT_MESSAGE =
@@ -16,9 +17,12 @@ const NO_MATCH_MESSAGE =
   "Não encontrei informações suficientes no catálogo para confirmar produtos para essa necessidade. Para evitar uma recomendação inadequada, recomendo confirmar com a equipe da NAP Tintas. Se quiser, me conte mais detalhes (o que será pintado, ambiente, problema) e eu tento novamente.";
 const COLOR_LIMITATION =
   "O catálogo atual não traz informações de cores dos produtos, então não consigo confirmar a cor desejada.";
+const NO_PRICE_TEXT = "preço sob consulta com a equipe da NAP Tintas"; // usado quando o produto ainda não tem preço cadastrado
 
 // Formata número como moeda brasileira: 189.9 -> "R$ 189,90".
 const brl = (n) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+// [CATÁLOGO NOVO] Preço 0 ou vazio no banco significa "ainda não cadastrado": nunca mostrar "R$ 0,00" nem inventar valor.
+const hasPrice = (p) => Number(p.price) > 0;
 
 // Mantém só as últimas mensagens válidas do histórico enviado pelo site (evita lixo e abuso).
 function sanitizeHistory(history, config) {
@@ -54,6 +58,7 @@ function normalizeNeed(raw, vocabulary) {
     environment_type: ["interno", "externo"].includes(r.environment_type) ? r.environment_type : null,
     surface: str(r.surface),
     color: str(r.color),
+    color_related: arr(r.color_related).slice(0, 6), // cores vizinhas na roda de cores (só palavras de busca; o código confere no cadastro)
     finish: str(r.finish),
     brand: str(r.brand),
     budget: Number.isFinite(budgetNum) && budgetNum > 0 ? budgetNum : null,
@@ -84,12 +89,16 @@ function toFacts(entry) {
   const p = entry.product;
   return {
     id: p.id, name: p.name, brand: p.brand, category: p.category, finish: p.finish,
-    price: p.price, price_text: brl(p.price), coverage: p.coverage, description: p.description,
+    price: hasPrice(p) ? p.price : null, price_text: hasPrice(p) ? brl(p.price) : NO_PRICE_TEXT,
+    coverage: p.coverage, description: cleanDescription(p.description), // descrição limpa: sem códigos/notas internas
     stock_units: p.stock, surface: p.surface, tags: p.tags,
     details: p.details, // colunas extras do Supabase (ex.: secagem, diluição, cores...)
     environments: p.environments, purposes: p.purposes,
     compatibility: entry.compatibility, match_reasons: entry.reasons, notes: entry.notes,
     within_budget: entry.within_budget,
+    matching_colors: entry.matching_colors, // cores cadastradas que SÃO a cor pedida (vazio = nenhuma)
+    similar_colors: entry.similar_colors, // cores cadastradas PRÓXIMAS da pedida (mesma família / vizinhas na roda de cores)
+    problem_in_description: entry.problem_in_description, // o problema citado aparece no cadastro? (true/false/null)
   };
 }
 
@@ -98,7 +107,7 @@ function toCard(entry, available) {
   const p = entry.product;
   return {
     id: p.id, name: p.name, brand: p.brand, category: p.category, finish: p.finish,
-    price: p.price, stock: p.stock, coverage: p.coverage, description: p.description,
+    price: hasPrice(p) ? p.price : null, stock: p.stock, coverage: p.coverage, description: cleanDescription(p.description),
     image: p.image, icon: p.icon, compatibility: entry.compatibility, available,
   };
 }
@@ -110,7 +119,7 @@ function buildFallbackMessage(result) {
     parts.push(`Encontrei uma opção que combina com o que você descreveu (${result.unavailable.map((u) => u.product.name).join(", ")}), mas ela está sem estoque no momento.`);
   }
   if (result.available.length) {
-    parts.push(`Estas opções disponíveis podem atender ao seu caso: ${result.available.map((a) => `${a.product.name} (${brl(a.product.price)})`).join("; ")}.`);
+    parts.push(`Estas opções disponíveis podem atender ao seu caso: ${result.available.map((a) => `${a.product.name} (${hasPrice(a.product) ? brl(a.product.price) : NO_PRICE_TEXT})`).join("; ")}.`);
   }
   parts.push(...result.limitations);
   return parts.join(" ");
@@ -202,6 +211,20 @@ function createNapAI({ llm, repository, config }) {
       if (found.budget !== null && found.available.length && found.available.every((a) => a.within_budget === false)) {
         limitations.push(`Nenhuma das opções disponíveis compatíveis custa até ${brl(found.budget)} por unidade.`);
       }
+      // [CATÁLOGO NOVO] Cor pedida x opções que SERVEM para o caso (a cor nunca faz um produto inadequado entrar na lista).
+      // Se nenhuma opção adequada tem a cor exata: oferece tons próximos (cadastrados) ou manda consultar a equipe.
+      if (need.color && catalogHasColors && found.available.length && !found.available.some((a) => a.matching_colors.length)) {
+        const similar = [...new Set(found.available.flatMap((a) => a.similar_colors))].slice(0, 8);
+        limitations.push(similar.length
+          ? `Não encontrei a cor "${need.color}" exatamente entre as opções adequadas ao seu caso, mas há tons próximos cadastrados: ${similar.join(", ")}. Para a cor exata, consulte a disponibilidade com a equipe da NAP Tintas.`
+          : `Não encontrei a cor "${need.color}" nem tons próximos entre as opções adequadas ao seu caso. Consulte a disponibilidade dessa cor com a equipe da NAP Tintas.`);
+      }
+      // [CATÁLOGO NOVO] Preço ainda não cadastrado: não dá para confirmar orçamento nem informar valor.
+      if (found.available.some((a) => !hasPrice(a.product))) {
+        limitations.push(found.budget !== null
+          ? `O valor de alguns produtos deve ser consultado com a equipe da NAP Tintas (ainda sem preço cadastrado), então não consigo confirmar se cabem no orçamento de ${brl(found.budget)}.`
+          : "O valor de alguns produtos deve ser consultado com a equipe da NAP Tintas (ainda sem preço cadastrado).");
+      }
       if (found.relaxed) limitations.push("As alternativas disponíveis têm compatibilidade menor com o pedido original.");
       const result = { ...found, limitations };
 
@@ -232,7 +255,7 @@ function createNapAI({ llm, repository, config }) {
         const picked = ids.map((id) => found.available.find((a) => String(a.product.id) === id)).filter(Boolean);
         if (picked.length) chosen = picked;
         // Guarda anti-invenção de preços.
-        const allowed = [...found.available, ...found.unavailable].map((a) => a.product.price);
+        const allowed = [...found.available, ...found.unavailable].map((a) => a.product.price).filter((v) => v > 0); // preço 0 nunca é "válido"
         if (found.budget !== null) allowed.push(found.budget);
         if (!messageText || !pricesAreValid(messageText, allowed)) {
           // Avisa no terminal POR QUE a resposta do Gemini foi descartada (facilita o diagnóstico).

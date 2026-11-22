@@ -4,12 +4,36 @@
 
 let aiHistory = [];
 
+// [CATÁLOGO NOVO] Evita que texto vindo da IA/banco seja interpretado como HTML.
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+// [CATÁLOGO NOVO] Com preço cadastrado mostra o valor; sem preço (0/vazio no banco) manda consultar a equipe, nunca "R$ 0,00".
+function formatPrice(price) {
+    const value = Number(price);
+    return value > 0 ? `R$ ${value.toFixed(2).replace(".", ",")}` : "Consulte a equipe NAP";
+}
+
 async function getRecommendations() {
     const input = document.getElementById("problem-input");
     const result = document.getElementById("recommendations");
     const button = document.getElementById("recommend-btn");
 
     if (!input || !result || !button) return;
+
+    // [ENTER PARA ENVIAR] Enter envia a mensagem; Shift+Enter continua pulando linha na caixa de texto.
+    input.addEventListener("keydown", (event) => {
+        // isComposing = o usuário está escolhendo uma letra acentuada/IME: não deve enviar nesse momento.
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();          // impede o "pular linha" padrão do Enter
+            if (!button.disabled) button.click(); // reaproveita o mesmo envio do botão (e ignora se já está enviando)
+        }
+    });
 
     button.addEventListener("click", async () => {
         const message = input.value.trim();
@@ -74,7 +98,7 @@ async function getRecommendations() {
             if (data.message) {
                 html += `
                     <div class="ai-response">
-                        <p>${data.message}</p>
+                        <p>${escapeHtml(data.message)}</p>
                     </div>
                 `;
             }
@@ -89,17 +113,15 @@ async function getRecommendations() {
                 html += products.map(product => `
                     <article class="mini-product">
                         <small>
-                            ${product.brand} · ${product.category}
+                            ${escapeHtml(product.brand)} · ${escapeHtml(product.category)}
                         </small>
 
-                        <h3>${product.name}</h3>
+                        <h3>${escapeHtml(product.name)}</h3>
 
-                        <p>${product.description}</p>
+                        <p>${escapeHtml(product.description)}</p>
 
                         <strong>
-                            R$ ${Number(product.price)
-                                .toFixed(2)
-                                .replace(".", ",")}
+                            ${formatPrice(product.price)}
                         </strong>
                     </article>
                 `).join("");
@@ -126,7 +148,7 @@ async function getRecommendations() {
 
             result.innerHTML = `
                 <div class="ai-response">
-                    <p>${error.message}</p>
+                    <p>${escapeHtml(error.message)}</p>
                 </div>
             `;
 
