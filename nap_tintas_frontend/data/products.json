@@ -9,7 +9,7 @@
     "stock": 12,
     "coverage": "Até 350 m² por lata",
     "description": "Tinta acrílica fosca para paredes, com cobertura e acabamento uniforme.",
-    "image": "https://down-br.img.susercontent.com/file/sg-11134201-7rbmu-lmqfhxvhxwwg8c",
+    "image": "/static/img/products/produto-1.webp",
     "icon": "house",
     "surface": [
       "Parede",
@@ -42,7 +42,7 @@
     "stock": 25,
     "coverage": "Até 250 m² por lata",
     "description": "Tinta fosca para paredes e tetos, indicada para ambientes internos e externos preparados.",
-    "image": "https://down-br.img.susercontent.com/file/sg-11134201-7rdwc-lxtpae1z8ebq2a",
+    "image": "/static/img/products/produto-2.webp",
     "icon": "sofa",
     "surface": [
       "Parede",
@@ -73,7 +73,7 @@
     "stock": 8,
     "coverage": "Até 70 m² por lata",
     "description": "Esmalte fosco para madeira e metais, indicado para ambientes internos e externos.",
-    "image": "https://loja.suvinil.com.br/_next/image?q=75&url=https%3A%2F%2Fdigitalprdaddc4dsa.blob.core.windows.net%2Fdigital-products-img%2Fproducts%2F39%2Fimage%2Fdisplay%2F34%2F1.webp%3Fsv%3D2026-02-06%26spr%3Dhttps%26st%3D2026-09-20T01%253A44%253A53Z%26se%3D2026-10-20T01%253A49%253A53Z%26sr%3Db%26sp%3Dr%26sig%3DHWi4qToDn6fGV52LvJUjPF0x3bgmGifWoL9f22ebkvo%253D&w=1920",
+    "image": "/static/img/products/produto-3.webp",
     "icon": "hammer",
     "surface": [
       "Madeira",
@@ -106,7 +106,7 @@
     "stock": 6,
     "coverage": "Até 90 m² por lata",
     "description": "Impermeabilizante elástico para paredes e fachadas, com proteção contra umidade e chuva.",
-    "image": "https://www.quartzolit.weber/files/br/styles/768x768_resize/public/pictures/2026-01/AF_3D_Borracha_Lquida_3_6kg_PNG_C9D50AD5B9ED4EB183CDD82A02C27D47.jpg.webp?cb=21d84746&itok=EnMGA2VH",
+    "image": "/static/img/products/produto-4.webp",
     "icon": "shield-check",
     "surface": [
       "Piso",
@@ -138,7 +138,7 @@
     "stock": 10,
     "coverage": "Até 60 m² por lata",
     "description": "Auxilia no tratamento de umidade e proteção de superfícies.",
-    "image": "https://www.quartzolit.weber/files/br/styles/768x768_resize/public/pictures/2026-01/AF_3D_Borracha_Lquida_3_6kg_PNG_C9D50AD5B9ED4EB183CDD82A02C27D47.jpg.webp?cb=21d84746&itok=EnMGA2VH",
+    "image": "/static/img/products/produto-5.webp",
     "icon": "shield-check",
     "surface": [
       "Parede",
@@ -171,7 +171,7 @@
     "stock": 30,
     "coverage": "Até 2 m² por lata",
     "description": "Spray para pequenos projetos e objetos diversos.",
-    "image": "https://loja.suvinil.com.br/_next/image?q=75&url=https%3A%2F%2Fdigitalprdaddc4dsa.blob.core.windows.net%2Fdigital-products-img%2Fproducts%2F39%2Fimage%2Fdisplay%2F34%2F1.webp%3Fsv%3D2026-02-06%26spr%3Dhttps%26st%3D2026-09-20T01%253A44%253A53Z%26se%3D2026-10-20T01%253A49%253A53Z%26sr%3Db%26sp%3Dr%26sig%3DHWi4qToDn6fGV52LvJUjPF0x3bgmGifWoL9f22ebkvo%253D&w=1920",
+    "image": "/static/img/products/produto-6.webp",
     "icon": "spray-can",
     "surface": [
       "Metal",

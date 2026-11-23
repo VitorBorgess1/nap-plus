@@ -117,3 +117,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const logout = document.getElementById("logout-button");
     if (logout) logout.addEventListener("click", logoutCustomer);
 });
+
+/* ---------- Menu mobile ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("nav-toggle");
+    const nav = document.getElementById("main-nav");
+    if (!toggle || !nav) return;
+    const setOpen = open => {
+        nav.classList.toggle("open", open);
+        toggle.setAttribute("aria-expanded", open);
+        toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+    };
+    toggle.addEventListener("click", () => setOpen(!nav.classList.contains("open")));
+    nav.querySelectorAll("a[href]").forEach(a => a.addEventListener("click", () => setOpen(false)));
+    document.addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+});
