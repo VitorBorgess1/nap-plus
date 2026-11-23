@@ -3,7 +3,9 @@
 <header class="site-header">
     {% include "partials/_logo.html" %}
 
-    <nav aria-label="Menu principal">
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="main-nav"><span></span><span></span><span></span></button>
+
+    <nav id="main-nav" aria-label="Menu principal">
         <a href="{{ url_for('home') }}"{% if request.endpoint == 'home' %} aria-current="page"{% endif %}>Início</a>
         <a href="{{ url_for('home') }}#empresa">A empresa</a>
         <a href="{{ url_for('home') }}#recomendador">Recomendador IA</a>

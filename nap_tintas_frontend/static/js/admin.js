@@ -18,12 +18,12 @@ const slug = s => norm(s).replace(/\s+/g, '-');
 /* ---------- dados de exemplo ---------- */
 const seed = () => ({
   products: [
-    { id: 1, name: 'Suvinil Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 189.9, stock: 12, image: 'https://down-br.img.susercontent.com/file/sg-11134201-7rbmu-lmqfhxvhxwwg8c', description: 'Tinta acrílica fosca para paredes.' },
-    { id: 2, name: 'Suvinil Toque Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 119.9, stock: 25, image: 'https://down-br.img.susercontent.com/file/sg-11134201-7rdwc-lxtpae1z8ebq2a', description: 'Tinta fosca para paredes e tetos.' },
-    { id: 3, name: 'Suvinil Cor & Proteção Fosco', brand: 'Suvinil', category: 'Madeira e Metal', price: 149.9, stock: 8, image: '', description: 'Esmalte para madeira e metais.' },
-    { id: 4, name: 'Borracha Líquida Elástica Quartzolit', brand: 'Quartzolit', category: 'Piso', price: 169.9, stock: 6, image: '', description: 'Impermeabilizante elástico.' },
-    { id: 5, name: 'Impermeabilizante para Parede', brand: 'Quartzolit', category: 'Tratamento', price: 139.9, stock: 10, image: '', description: 'Tratamento de umidade e proteção.' },
-    { id: 6, name: 'Tinta Spray Multiuso', brand: 'Colorgin', category: 'Multiuso', price: 39.9, stock: 30, image: '', description: 'Spray para pequenos projetos.' },
+    { id: 1, name: 'Suvinil Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 189.9, stock: 12, image: '/static/img/products/produto-1.webp', description: 'Tinta acrílica fosca para paredes.' },
+    { id: 2, name: 'Suvinil Toque Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 119.9, stock: 25, image: '/static/img/products/produto-2.webp', description: 'Tinta fosca para paredes e tetos.' },
+    { id: 3, name: 'Suvinil Cor & Proteção Fosco', brand: 'Suvinil', category: 'Madeira e Metal', price: 149.9, stock: 8, image: '/static/img/products/produto-3.webp', description: 'Esmalte para madeira e metais.' },
+    { id: 4, name: 'Borracha Líquida Elástica Quartzolit', brand: 'Quartzolit', category: 'Piso', price: 169.9, stock: 6, image: '/static/img/products/produto-4.webp', description: 'Impermeabilizante elástico.' },
+    { id: 5, name: 'Impermeabilizante para Parede', brand: 'Quartzolit', category: 'Tratamento', price: 139.9, stock: 10, image: '/static/img/products/produto-5.webp', description: 'Tratamento de umidade e proteção.' },
+    { id: 6, name: 'Tinta Spray Multiuso', brand: 'Colorgin', category: 'Multiuso', price: 39.9, stock: 30, image: '/static/img/products/produto-6.webp', description: 'Spray para pequenos projetos.' },
     { id: 7, name: 'Massa Corrida PVA', brand: 'Suvinil', category: 'Preparação', price: 34.9, stock: 0, image: '', description: 'Nivela e prepara paredes internas.' }
   ],
   orders: [
