@@ -147,6 +147,19 @@ function pricesAreValid(message, allowedNumbers) {
   });
 }
 
+// [ANTI-INJEÇÃO] A mensagem do cliente é colocada entre aspas triplas no prompt da etapa 2. Se o cliente digitar três aspas seguidas,
+// ele poderia "fechar" as aspas e escrever um falso bloco "DADOS REAIS DO SISTEMA". Aqui tiramos essas duas armadilhas.
+function quoteForPrompt(text) {
+  return String(text)
+    .replace(/"{3,}/g, '"')                                   // aspas triplas viram aspas simples
+    .replace(/DADOS\s+REAIS\s+DO\s+SISTEMA/gi, "dados do sistema"); // o marcador só pode existir uma vez (o verdadeiro)
+}
+
+// [ANTI-INJEÇÃO] A assistente nunca deve mandar links (o prompt já proíbe; aqui o código garante). Link = golpe em potencial.
+function containsLink(message) {
+  return /https?:\/\/|www\./i.test(String(message));
+}
+
 // Cria a IA. Retorna { chat } com a função principal.
 function createNapAI({ llm, repository, config }) {
   return {
@@ -245,7 +258,7 @@ function createNapAI({ llm, repository, config }) {
       try {
         const out = await llm.generateJson({
           system: RESPOND_SYSTEM,
-          contents: [{ role: "user", parts: [{ text: `Mensagem do cliente: """${text}"""\n\nDADOS REAIS DO SISTEMA:\n${JSON.stringify(facts)}` }] }],
+          contents: [{ role: "user", parts: [{ text: `Mensagem do cliente: """${quoteForPrompt(text)}"""\n\nDADOS REAIS DO SISTEMA:\n${JSON.stringify(facts)}` }] }],
           temperature: 0.4,
           schema: RESPOND_SCHEMA, // [CORREÇÃO] força o formato { message, recommended_ids }
         });
@@ -257,9 +270,9 @@ function createNapAI({ llm, repository, config }) {
         // Guarda anti-invenção de preços.
         const allowed = [...found.available, ...found.unavailable].map((a) => a.product.price).filter((v) => v > 0); // preço 0 nunca é "válido"
         if (found.budget !== null) allowed.push(found.budget);
-        if (!messageText || !pricesAreValid(messageText, allowed)) {
+        if (!messageText || !pricesAreValid(messageText, allowed) || containsLink(messageText)) {
           // Avisa no terminal POR QUE a resposta do Gemini foi descartada (facilita o diagnóstico).
-          console.warn("[IA-NAP] Resposta do Gemini descartada (vazia ou com preço que não bate com o cadastro):", JSON.stringify(messageText));
+          console.warn("[IA-NAP] Resposta do Gemini descartada (vazia, com preço que não bate com o cadastro ou com link):", JSON.stringify(messageText));
           messageText = buildFallbackMessage(result);
         }
       } catch (err) {
