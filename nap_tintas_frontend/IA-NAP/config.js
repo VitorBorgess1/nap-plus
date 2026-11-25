@@ -41,7 +41,10 @@ const config = {
   // Quantas mensagens antigas da conversa são enviadas ao Gemini como contexto.
   maxHistoryMessages: 8,
   // Limite de pedidos por minuto por IP (protege sua cota/custo do Gemini).
-  rateLimitPerMinute: 20,
+  // O IP é o do visitante (o Flask repassa em X-Forwarded-For), não o 127.0.0.1 do Flask.
+  rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE) || 20,
+  // Quem o Express considera "proxy de confiança" para ler o IP real. "loopback" = só o Flask na mesma máquina.
+  trustProxy: process.env.TRUST_PROXY || "loopback",
 };
 
 module.exports = config; // deixa o objeto disponível para os outros arquivos

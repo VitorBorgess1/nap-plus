@@ -5,11 +5,23 @@ from supabase import create_client
 # usados só para encaminhar a mensagem ao serviço Node da IA-NAP.
 import os
 import json
+import time
+import threading
 import urllib.request
 import urllib.error
 # --- FIM integração IA NAP+ ---
 
 app = Flask(__name__)
+
+# --- INÍCIO integração IA NAP+ (proxy confiável) ---
+# Se o Flask rodar ATRÁS de um proxy reverso (nginx, Render, Railway...), request.remote_addr seria o IP do proxy.
+# Defina NAP_TRUSTED_PROXIES=1 (quantidade de proxies) para ler o IP real do visitante em X-Forwarded-For.
+# Em desenvolvimento local (padrão 0) o cabeçalho é ignorado, então ninguém consegue forjar o próprio IP.
+_NAP_TRUSTED_PROXIES = int(os.environ.get("NAP_TRUSTED_PROXIES", "0"))
+if _NAP_TRUSTED_PROXIES > 0:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=_NAP_TRUSTED_PROXIES)
+# --- FIM integração IA NAP+ (proxy confiável) ---
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -22,6 +34,28 @@ if SUPABASE_URL and SUPABASE_KEY:
 # Endereço do serviço Node.js da IA (IA-NAP/server.js). Pode ser trocado
 # por variável de ambiente sem precisar alterar este arquivo.
 NAP_AI_URL = os.environ.get("NAP_AI_URL", "http://127.0.0.1:3001/api/chat")
+
+# Limite de mensagens para a IA por IP do visitante (protege a cota do Gemini). Janela de 60 segundos, em memória.
+NAP_AI_RATE_LIMIT_PER_MIN = int(os.environ.get("NAP_AI_RATE_LIMIT_PER_MIN", "20"))
+_ai_hits = {}                      # ip -> lista de instantes (time.monotonic) dos pedidos no último minuto
+_ai_hits_lock = threading.Lock()   # o Flask atende vários pedidos ao mesmo tempo (threads)
+
+
+def _ai_rate_limit_check(ip):
+    """Registra o pedido e devolve 0 se pode passar, ou os segundos a esperar se o IP estourou o limite."""
+    now = time.monotonic()
+    with _ai_hits_lock:
+        # Limpeza: tira IPs sem pedidos recentes para o dicionário não crescer para sempre.
+        if len(_ai_hits) > 1000:
+            for k in [k for k, v in _ai_hits.items() if not v or now - v[-1] >= 60]:
+                del _ai_hits[k]
+        recent = [t for t in _ai_hits.get(ip, []) if now - t < 60]
+        if len(recent) >= NAP_AI_RATE_LIMIT_PER_MIN:
+            _ai_hits[ip] = recent
+            return max(1, int(60 - (now - recent[0])) + 1)
+        recent.append(now)
+        _ai_hits[ip] = recent
+        return 0
 # --- FIM integração IA NAP+ ---
 
 # ============================================================
@@ -476,6 +510,16 @@ def recommend():
 
 @app.post("/api/ai/chat")
 def ai_chat():
+    client_ip = request.remote_addr or "unknown"
+
+    # Limite por visitante: aqui no Flask, que é quem enxerga o IP de verdade.
+    wait = _ai_rate_limit_check(client_ip)
+    if wait:
+        resp = jsonify({"message": "Muitas mensagens em pouco tempo. Aguarde um instante e tente novamente."})
+        resp.status_code = 429
+        resp.headers["Retry-After"] = str(wait)
+        return resp
+
     data = request.get_json(silent=True) or {}
     payload = json.dumps({
         "message": data.get("message", ""),
@@ -485,7 +529,11 @@ def ai_chat():
     req = urllib.request.Request(
         NAP_AI_URL,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            # Repassa o IP do visitante para o Node (que confia nesse cabeçalho só vindo do loopback).
+            "X-Forwarded-For": client_ip,
+        },
         method="POST",
     )
     try:

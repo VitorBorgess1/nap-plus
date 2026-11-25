@@ -10,6 +10,9 @@ const { createNapAI } = require("./nap-ai");
 // Monta o app. Recebe "ai" pronto para facilitar testes.
 function createApp(ai, cfg = config) {
   const app = express();
+  // O Flask chama este serviço pelo loopback (127.0.0.1) e repassa o IP real do visitante em X-Forwarded-For.
+  // "loopback" = só confia nesse cabeçalho quando o pedido vem da própria máquina; assim req.ip passa a ser o IP do visitante.
+  app.set("trust proxy", cfg.trustProxy ?? "loopback");
   app.use(express.json({ limit: "20kb" })); // lê JSON do corpo (com limite de tamanho)
 
   // CORS: só os sites da lista ALLOWED_ORIGINS podem chamar a IA pelo navegador.
@@ -27,10 +30,19 @@ function createApp(ai, cfg = config) {
 
   // Limite simples de pedidos por IP (memória) para proteger a cota do Gemini.
   const hits = new Map();
+  // Limpeza periódica: remove IPs sem pedidos no último minuto, para o Map não crescer para sempre.
+  const cleaner = setInterval(() => {
+    const now = Date.now();
+    for (const [ip, list] of hits) {
+      if (!list.some((t) => now - t < 60000)) hits.delete(ip);
+    }
+  }, 60000);
+  cleaner.unref(); // não impede o processo (nem os testes) de terminar
   app.use("/api/chat", (req, res, next) => {
     const now = Date.now();
     const list = (hits.get(req.ip) || []).filter((t) => now - t < 60000); // pedidos do último minuto
     if (list.length >= cfg.rateLimitPerMinute) {
+      res.setHeader("Retry-After", Math.max(1, Math.ceil((60000 - (now - list[0])) / 1000)));
       return res.status(429).json({ message: "Muitas mensagens em pouco tempo. Aguarde um instante e tente novamente." });
     }
     list.push(now);
