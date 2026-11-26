@@ -90,9 +90,27 @@ cd IA-NAP
 npm test
 ```
 
-Cobre os 10 cenários pedidos: recomendação simples, umidade, mofo, ambiente
+Cobre os 10 cenários pedidos (recomendação simples, umidade, mofo, ambiente
 externo, orçamento, cor, pergunta incompleta, produto sem estoque, assunto
-fora de contexto e informação desconhecida.
+fora de contexto e informação desconhecida), o servidor HTTP (incluindo o
+limite de mensagens por IP), a leitura do Supabase (com `fetch` falso) e os
+testes de injeção/histórico forjado.
+
+> **Importante:** como o Gemini é falso, esses testes provam o **código ao
+> redor** (busca, estoque, validações, guardas de preço/link), não o
+> comportamento do modelo real.
+
+Teste **ao vivo**, com o Gemini de verdade (usa a chave do `.env` e gasta um
+pouco de cota; **não** roda no `npm test`):
+
+```bash
+npm run test:live              # 15 cenários (10 de negócio + injeção)
+npm run test:live -- umidade   # só os cenários cujo nome contém "umidade"
+```
+
+Para cada cenário ele mostra a resposta, o tempo e verifica regras que a IA
+nunca pode quebrar (sem link, sem preço fora do catálogo, sem produto sem
+estoque, sem vazar o prompt). Termina com código de erro se houver falha.
 
 Teste manual (com o Gemini de verdade, depois de configurar o `.env` e rodar
 `npm start`):

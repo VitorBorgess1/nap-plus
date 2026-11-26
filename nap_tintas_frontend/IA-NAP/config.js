@@ -40,6 +40,13 @@ const config = {
   maxMessageLength: 600,
   // Quantas mensagens antigas da conversa são enviadas ao Gemini como contexto.
   maxHistoryMessages: 8,
+  // [LATÊNCIA] Tempo máximo (ms) para a conversa INTEIRA (2 chamadas ao Gemini + retry + modelo reserva + catálogo).
+  // Precisa ser MENOR que o timeout do Flask (90s em app.py), senão o site desiste antes da IA responder.
+  chatBudgetMs: Number(process.env.CHAT_BUDGET_MS) || 60000,
+  // Se sobrar menos que isso (ms) depois da etapa 1, pula a etapa 2 e usa a mensagem determinística.
+  minStage2Ms: 5000,
+  // Mostra no terminal quanto tempo cada conversa levou (desligue com LOG_TIMINGS=false).
+  logTimings: process.env.LOG_TIMINGS !== "false",
   // Limite de pedidos por minuto por IP (protege sua cota/custo do Gemini).
   // O IP é o do visitante (o Flask repassa em X-Forwarded-For), não o 127.0.0.1 do Flask.
   rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE) || 20,
