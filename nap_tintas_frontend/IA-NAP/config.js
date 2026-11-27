@@ -17,8 +17,9 @@ const config = {
     .split(",")            // separa a lista por vírgula
     .map((o) => o.trim())  // tira espaços
     .filter(Boolean),      // remove itens vazios
-  // De onde vêm os produtos: "json" (arquivo local) ou "supabase" (banco de dados).
-  productsSource: process.env.PRODUCTS_SOURCE || "json",
+  // De onde vêm os produtos: "supabase" (banco de dados, padrão) ou "json" (arquivo local, só p/ dev).
+  // O Flask (app.py/catalog.py) lê ESTA MESMA variável deste mesmo .env: site e IA sempre usam o mesmo catálogo.
+  productsSource: process.env.PRODUCTS_SOURCE || "supabase",
   // Credenciais do Supabase (usadas só quando PRODUCTS_SOURCE=supabase). Ficam SOMENTE no .env.
   // Aceita a URL com ou sem barra no final e com ou sem "/rest/v1" (o painel do Supabase mostra as duas formas).
   supabaseUrl: (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, ""),
@@ -28,7 +29,9 @@ const config = {
   // Tabela onde fica a quantidade em estoque (colunas "produto_id" e "quantidade"). Deixe vazio para ler o estoque da própria tabela de produtos.
   supabaseStockTable: process.env.SUPABASE_STOCK_TABLE ?? "estoque",
   // Por quantos segundos reaproveitar a lista de produtos (0 = sempre buscar do Supabase).
-  supabaseCacheSeconds: Number(process.env.SUPABASE_CACHE_SECONDS ?? 10),
+  supabaseCacheSeconds: Number(process.env.SUPABASE_CACHE_SECONDS ?? 3),
+  // Quantidade mostrada para produto que existe mas não tem registro de estoque (0 = esconder da loja e da IA).
+  supabaseUntrackedStock: Number(process.env.SUPABASE_UNTRACKED_STOCK ?? 100),
   // Arquivo de produtos: por padrão usa o MESMO data/products.json do site (estoque sempre atual).
   productsFile:
     process.env.PRODUCTS_FILE || path.join(__dirname, "..", "data", "products.json"),
@@ -40,13 +43,6 @@ const config = {
   maxMessageLength: 600,
   // Quantas mensagens antigas da conversa são enviadas ao Gemini como contexto.
   maxHistoryMessages: 8,
-  // [LATÊNCIA] Tempo máximo (ms) para a conversa INTEIRA (2 chamadas ao Gemini + retry + modelo reserva + catálogo).
-  // Precisa ser MENOR que o timeout do Flask (90s em app.py), senão o site desiste antes da IA responder.
-  chatBudgetMs: Number(process.env.CHAT_BUDGET_MS) || 60000,
-  // Se sobrar menos que isso (ms) depois da etapa 1, pula a etapa 2 e usa a mensagem determinística.
-  minStage2Ms: 5000,
-  // Mostra no terminal quanto tempo cada conversa levou (desligue com LOG_TIMINGS=false).
-  logTimings: process.env.LOG_TIMINGS !== "false",
   // Limite de pedidos por minuto por IP (protege sua cota/custo do Gemini).
   // O IP é o do visitante (o Flask repassa em X-Forwarded-For), não o 127.0.0.1 do Flask.
   rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE) || 20,

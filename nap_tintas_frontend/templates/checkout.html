@@ -8,7 +8,7 @@
         <div class="section-heading">
             <p class="eyebrow">SEU PEDIDO</p>
             <h1>Vamos finalizar?</h1>
-            <p>Confira seus produtos e preencha os dados para criar o pedido demonstrativo.</p>
+            <p>Confira seus produtos e preencha seus dados para fazer o pedido.</p>
         </div>
 
         <div class="checkout-grid">
@@ -17,6 +17,7 @@
                     <span class="panel-icon icon-orange">{{ icon('shopping-cart') }}</span>
                     <h2>Seu carrinho</h2>
                 </div>
+                <div id="cart-notes"></div>
                 <div id="cart-items"></div>
                 <div class="total-row">
                     <span>Total do pedido</span>
@@ -47,12 +48,12 @@
                     </label>
 
                     <div class="payment-note">
-                        <strong>Pagamento demonstrativo</strong>
-                        <p>Esta versão não processa pagamentos reais. O endpoint está preparado para futura integração com um gateway.</p>
+                        <strong>Como funciona o pagamento</strong>
+                        <p>Depois de enviar o pedido, a NAP Tintas entra em contato pelo e-mail informado com as instruções de pagamento. O pedido é separado assim que o pagamento for confirmado.</p>
                     </div>
 
                     <button class="btn btn-primary full-width" type="submit">
-                        Criar pedido {{ icon('arrow-right') }}
+                        Enviar pedido {{ icon('arrow-right') }}
                     </button>
                 </form>
 

@@ -6,3 +6,4 @@ instance/
 .vscode/
 .idea/
 .env
+data/admin_data.json

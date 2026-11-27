@@ -69,7 +69,7 @@ function renderProducts() {
                 </div>
                 <div class="product-meta"><span>${product.finish}</span><span>${product.stock} em estoque</span></div>
                 <div class="product-price">${money(product.price)}</div>
-                <button class="btn btn-primary full-width" onclick="addProduct(${product.id})">Adicionar ao carrinho</button>
+                <button class="btn btn-primary full-width" data-product-id="${String(product.id).replace(/[&<>"']/g, "")}" onclick="addProduct(this.dataset.productId)">Adicionar ao carrinho</button>
             </div>
         </article>`).join("");
 }
@@ -95,27 +95,50 @@ function resetFilters() {
     renderProducts();
 }
 
-async function loadProducts() {
+// Atualização automática: o que mudar no banco (produto novo, preço, estoque) chega aqui sozinho,
+// sem recarregar a página. Roda a cada REFRESH_MS enquanto a aba está aberta e ao voltar para ela.
+const REFRESH_MS = 15000;
+
+function fillBrandFilter() {
+    const brandFilter = document.getElementById("brand-filter");
+    const current = brandFilter.value;
+    const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
+    [...brandFilter.options].forEach(option => { if (option.value) option.remove(); });
+    brands.forEach(brand => {
+        const option = document.createElement("option");
+        option.value = brand;
+        option.textContent = brand;
+        brandFilter.appendChild(option);
+    });
+    brandFilter.value = brands.includes(current) ? current : "";   // mantém o filtro escolhido
+}
+
+async function loadProducts({ silent = false } = {}) {
     try {
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/products", { cache: "no-store" });
         if (!response.ok) throw new Error("Falha ao carregar produtos");
-        products = await response.json();
-        const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
-        const brandFilter = document.getElementById("brand-filter");
-        brands.forEach(brand => {
-            const option = document.createElement("option");
-            option.value = brand;
-            option.textContent = brand;
-            brandFilter.appendChild(option);
-        });
+        const fresh = await response.json();
+        if (silent && JSON.stringify(fresh) === JSON.stringify(products)) return;   // nada mudou
+        products = fresh;
+        fillBrandFilter();
         renderProducts();
     } catch (error) {
+        // Numa atualização automática que falhou, mantém o que já está na tela.
+        if (silent && products.length) return;
         document.getElementById("product-grid").innerHTML = "<p>Não foi possível carregar o catálogo agora.</p>";
     }
 }
 
+function startAutoRefresh() {
+    setInterval(() => { if (document.visibilityState === "visible") loadProducts({ silent: true }); }, REFRESH_MS);
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") loadProducts({ silent: true });
+    });
+}
+
 function addProduct(id) {
-    const product = products.find(p => p.id === id);
+    // O id vem do banco e pode ser número ou texto (uuid): compara sempre como texto.
+    const product = products.find(p => String(p.id) === String(id));
     if (!product) return;
     addToCart(product);
     const toast = document.getElementById("toast");
@@ -126,6 +149,7 @@ function addProduct(id) {
 
 document.addEventListener("DOMContentLoaded", () => {
     loadProducts();
+    startAutoRefresh();
     document.getElementById("search-input").addEventListener("input", renderProducts);
     document.getElementById("category-filter").addEventListener("change", renderProducts);
     document.getElementById("finish-filter").addEventListener("change", renderProducts);

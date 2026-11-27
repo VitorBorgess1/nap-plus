@@ -116,7 +116,7 @@ class JsonProductRepository {
 
 // Repositório que lê do Supabase pela API REST (PostgREST). Não precisa instalar nada: usa o fetch do Node 18+.
 class SupabaseProductRepository {
-  constructor({ url, key, table, stockTable = "", cacheSeconds = 10, fetchImpl = globalThis.fetch }) {
+  constructor({ url, key, table, stockTable = "", cacheSeconds = 3, untrackedStock = 100, fetchImpl = globalThis.fetch }) {
     if (!url || !key) {
       throw new Error("PRODUCTS_SOURCE=supabase exige SUPABASE_URL e SUPABASE_KEY no arquivo .env da IA-NAP.");
     }
@@ -125,6 +125,8 @@ class SupabaseProductRepository {
     this.table = table;
     this.stockTable = stockTable; // tabela separada de estoque (opcional)
     this.cacheMs = Math.max(0, cacheSeconds) * 1000;
+    // Produto sem NENHUM registro de estoque (nem linha na tabela, nem coluna própria) aparece com esta quantidade. 0 = esconder.
+    this.untrackedStock = Math.max(0, Number(untrackedStock) || 0);
     this.fetch = fetchImpl;
     this.cache = null; // { at, products }
   }
@@ -164,7 +166,15 @@ class SupabaseProductRepository {
     // Busca produtos e estoque ao mesmo tempo.
     const [rows, stockRows] = await Promise.all([
       this.fetchTable(this.table),
-      this.stockTable ? this.fetchTable(this.stockTable) : Promise.resolve(null),
+      this.stockTable
+        ? this.fetchTable(this.stockTable).catch((err) => {
+            if (!String(err.message).startsWith("Supabase respondeu 404")) throw err;
+            // Não existe tabela de estoque separada: o estoque é uma coluna da própria tabela de produtos.
+            console.warn(`[IA-NAP] Tabela de estoque "${this.stockTable}" não existe; usando a coluna de estoque de "${this.table}".`);
+            this.stockTable = "";
+            return null;
+          })
+        : Promise.resolve(null),
     ]);
 
     // Soma a quantidade por produto (se houver mais de uma linha de estoque para o mesmo produto).
@@ -180,8 +190,14 @@ class SupabaseProductRepository {
 
     const products = rows
       .filter(isActive)
-      // Produto sem linha na tabela de estoque = 0 unidades (indisponível).
-      .map((r) => normalizeProduct(stockByProduct ? { ...r, stock: stockByProduct.get(String(r.id)) ?? 0 } : r));
+      .map((r) => {
+        // Prioridade: linha na tabela de estoque > coluna de estoque do próprio produto > sem controle.
+        const pid = String(r.id);
+        if (stockByProduct?.has(pid)) return normalizeProduct({ ...r, stock: stockByProduct.get(pid) });
+        const own = pick(r, ["stock", "estoque", "quantity", "quantidade", "qtd"]);
+        if (own !== undefined && own !== null) return normalizeProduct(r);
+        return normalizeProduct({ ...r, stock: this.untrackedStock });
+      });
     this.cache = { at: Date.now(), products };
     return products;
   }
@@ -205,6 +221,7 @@ function createProductRepository(config) {
       table: config.supabaseTable,
       stockTable: config.supabaseStockTable,
       cacheSeconds: config.supabaseCacheSeconds,
+      untrackedStock: config.supabaseUntrackedStock,
     });
   }
   throw new Error(`PRODUCTS_SOURCE="${config.productsSource}" inválido. Use "json" ou "supabase".`);

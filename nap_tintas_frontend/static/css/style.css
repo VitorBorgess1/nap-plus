@@ -1267,3 +1267,7 @@ img, svg { max-width:100%; }
     .product-grid { grid-template-columns:1fr; }
 }
 .product-visual.has-product-image small { font-size:.78rem; line-height:1.2; }
+
+/* Mensagem de erro do login do painel */
+.login-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #a12727; font-size: .9rem; }
+.login-error[hidden] { display: none; }

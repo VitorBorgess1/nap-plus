@@ -28,18 +28,11 @@ function parseJsonText(text) {
 // Cria o cliente. "fetchImpl" permite trocar o fetch nos testes (sem chamar a internet).
 // timeoutMs: desiste de uma chamada travada após 20s (para o modelo reserva assumir logo).
 // retryDelayMs: espera antes de tentar de novo quando o Gemini está sobrecarregado (503) ou com limite (429).
-// minAttemptMs: se sobrar menos que isso do tempo total da conversa, nem vale começar outra tentativa (retry/modelo reserva).
-function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 20000, retryDelayMs = 1500, minAttemptMs = 3000, fetchImpl = fetch }) {
-  // [LATÊNCIA] "deadline" = instante (Date.now()) em que a conversa inteira precisa terminar. Quanto tempo ainda resta?
-  const timeLeft = (deadline) => (deadline === undefined ? Infinity : deadline - Date.now());
-
+function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 20000, retryDelayMs = 1500, fetchImpl = fetch }) {
   // Faz UMA chamada a UM modelo.
-  async function callModel(modelName, { system, contents, temperature, schema, deadline }) {
-    const remaining = timeLeft(deadline);
-    if (remaining <= 0) throw new GeminiError("Tempo total da conversa esgotado antes de chamar o Gemini.", 408);
+  async function callModel(modelName, { system, contents, temperature, schema }) {
     const controller = new AbortController(); // permite cancelar se demorar demais
-    // O limite desta chamada é o menor entre o timeout normal e o tempo que ainda resta da conversa.
-    const timer = setTimeout(() => controller.abort(), Math.min(timeoutMs, remaining));
+    const timer = setTimeout(() => controller.abort(), timeoutMs); // cancela após o tempo limite
     try {
       const response = await fetchImpl(`${ENDPOINT}/${modelName}:generateContent`, {
         method: "POST",
@@ -86,8 +79,6 @@ function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 20000, r
       return await callModel(modelName, args);
     } catch (err) {
       if (err.status !== 503 && err.status !== 429) throw err;
-      // [LATÊNCIA] Sem tempo para esperar + tentar de novo? Desiste já (o chamador decide o que fazer).
-      if (timeLeft(args.deadline) < retryDelayMs + minAttemptMs) throw err;
       console.warn(`[IA-NAP] Modelo "${modelName}" sobrecarregado (HTTP ${err.status}); tentando de novo...`);
       await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       return await callModel(modelName, args);
@@ -99,18 +90,17 @@ function createGeminiClient({ apiKey, model, fallbackModel, timeoutMs = 20000, r
 
   return {
     // Pede ao Gemini uma resposta em JSON; tenta o modelo reserva se o principal falhar.
-    async generateJson({ system, contents, temperature = 0.2, schema, deadline }) {
+    async generateJson({ system, contents, temperature = 0.2, schema }) {
       if (!apiKey) throw new GeminiError("GEMINI_API_KEY não configurada no .env da IA-NAP.", 503);
       try {
-        return await callWithRetry(model, { system, contents, temperature, schema, deadline });
+        return await callWithRetry(model, { system, contents, temperature, schema });
       } catch (err) {
         // [DIAGNÓSTICO] Mostra no terminal (npm start) a causa real do erro do Gemini
         // (ex.: "HTTP 404" = nome de modelo inválido/sem acesso, "HTTP 429" = cota excedida).
         console.warn(`[IA-NAP] Falha no modelo "${model}": ${err.message}`);
-        // [LATÊNCIA] O modelo reserva só entra se ainda sobrar tempo útil da conversa.
-        if (fallbackModel && fallbackModel !== model && canFallback(err) && timeLeft(deadline) >= minAttemptMs) {
+        if (fallbackModel && fallbackModel !== model && canFallback(err)) {
           try {
-            return await callModel(fallbackModel, { system, contents, temperature, schema, deadline }); // segunda chance
+            return await callModel(fallbackModel, { system, contents, temperature, schema }); // segunda chance
           } catch (err2) {
             console.warn(`[IA-NAP] Falha no modelo reserva "${fallbackModel}": ${err2.message}`);
             throw err2;

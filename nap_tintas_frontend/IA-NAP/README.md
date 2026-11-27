@@ -33,7 +33,7 @@ isso é sempre resolvido em `product-search.js` / `product-repository.js`
 | `prompts.js` | Textos de instrução (prompts) enviados ao Gemini. |
 | `gemini-client.js` | Único arquivo que faz requisições HTTPS ao Gemini. |
 | `product-search.js` | Cruza a necessidade do cliente com o catálogo (pontuação, estoque, orçamento). |
-| `product-repository.js` | Único ponto que sabe **de onde vêm** os produtos (hoje: JSON). |
+| `product-repository.js` | Único ponto que sabe **de onde vêm** os produtos (Supabase por padrão; JSON só p/ dev). |
 | `config.js` | Lê o `.env` e centraliza as configurações. |
 | `products-test.json` | Cópia do catálogo para os testes automatizados. |
 | `tests/` | Testes automatizados (10 cenários pedidos + testes do servidor HTTP). |
@@ -90,27 +90,9 @@ cd IA-NAP
 npm test
 ```
 
-Cobre os 10 cenários pedidos (recomendação simples, umidade, mofo, ambiente
+Cobre os 10 cenários pedidos: recomendação simples, umidade, mofo, ambiente
 externo, orçamento, cor, pergunta incompleta, produto sem estoque, assunto
-fora de contexto e informação desconhecida), o servidor HTTP (incluindo o
-limite de mensagens por IP), a leitura do Supabase (com `fetch` falso) e os
-testes de injeção/histórico forjado.
-
-> **Importante:** como o Gemini é falso, esses testes provam o **código ao
-> redor** (busca, estoque, validações, guardas de preço/link), não o
-> comportamento do modelo real.
-
-Teste **ao vivo**, com o Gemini de verdade (usa a chave do `.env` e gasta um
-pouco de cota; **não** roda no `npm test`):
-
-```bash
-npm run test:live              # 15 cenários (10 de negócio + injeção)
-npm run test:live -- umidade   # só os cenários cujo nome contém "umidade"
-```
-
-Para cada cenário ele mostra a resposta, o tempo e verifica regras que a IA
-nunca pode quebrar (sem link, sem preço fora do catálogo, sem produto sem
-estoque, sem vazar o prompt). Termina com código de erro se houver falha.
+fora de contexto e informação desconhecida.
 
 Teste manual (com o Gemini de verdade, depois de configurar o `.env` e rodar
 `npm start`):
@@ -132,7 +114,14 @@ Outras mensagens para testar:
 Ou pela própria interface: rode os dois servidores e acesse
 `http://127.0.0.1:5000` → seção **NAP INTELIGENTE**.
 
-## Migrar de `products.json` para Supabase (futuro)
+## Catálogo compartilhado com o site (Supabase)
+
+O padrão agora é `PRODUCTS_SOURCE=supabase`, e o **Flask lê o mesmo `IA-NAP/.env`**
+(`catalog.py` no site espelha este repositório). Resultado: o que o admin cadastra/zera no
+site é exatamente o que a IA enxerga (cache de `SUPABASE_CACHE_SECONDS`, 10 s por padrão).
+Veja `.env.example`. Se faltar `SUPABASE_URL`/`SUPABASE_KEY`, a IA e o site não sobem.
+
+## (Histórico) Migrar de `products.json` para Supabase
 
 A IA nunca lê `products.json` diretamente — ela sempre passa por
 `product-repository.js`. Quando o Supabase estiver pronto:

@@ -172,10 +172,6 @@ function createNapAI({ llm, repository, config }) {
       }
       const cleanHistory = sanitizeHistory(history, config); // histórico seguro
 
-      // [LATÊNCIA] Orçamento de tempo da conversa INTEIRA (etapa 1 + catálogo + etapa 2). Tem que ser menor que o
-      // timeout do Flask (90s) para o cliente sempre receber uma resposta, mesmo com o Gemini lento ou instável.
-      const deadline = Date.now() + (config.chatBudgetMs ?? 60000);
-
       // ---------- ETAPA 1: Gemini interpreta ----------
       const products = await repository.listAll(); // catálogo atual (JSON hoje, Supabase amanhã)
       const vocabulary = buildVocabulary(products); // valores reais do catálogo
@@ -186,7 +182,6 @@ function createNapAI({ llm, repository, config }) {
           contents: toGeminiContents(cleanHistory, text),
           temperature: 0.1, // interpretação precisa ser estável
           schema: INTERPRET_SCHEMA, // [CORREÇÃO] força o formato da resposta
-          deadline,
         });
         need = normalizeNeed(rawNeed, vocabulary); // valida o JSON recebido
       } catch (err) {
@@ -261,14 +256,11 @@ function createNapAI({ llm, repository, config }) {
       let messageText;
       let chosen = found.available;
       try {
-        // [LATÊNCIA] Quase sem tempo? Nem chama o Gemini: a mensagem determinística (com os mesmos produtos reais) sai na hora.
-        if (deadline - Date.now() < (config.minStage2Ms ?? 5000)) throw new Error("tempo total da conversa quase esgotado");
         const out = await llm.generateJson({
           system: RESPOND_SYSTEM,
           contents: [{ role: "user", parts: [{ text: `Mensagem do cliente: """${quoteForPrompt(text)}"""\n\nDADOS REAIS DO SISTEMA:\n${JSON.stringify(facts)}` }] }],
           temperature: 0.4,
           schema: RESPOND_SCHEMA, // [CORREÇÃO] força o formato { message, recommended_ids }
-          deadline,
         });
         messageText = typeof out?.message === "string" ? out.message.trim() : "";
         // Só aceita ids que existem entre os DISPONÍVEIS (o Gemini não consegue "criar" produto).

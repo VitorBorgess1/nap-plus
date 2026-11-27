@@ -38,23 +38,19 @@
         <h2>Acesse o painel</h2>
         <p>Entre com suas credenciais administrativas para continuar.</p>
       </div>
-      <form class="login-form" action="#" method="post">
+      <form class="login-form" method="post">
         <label for="admin-email">E-mail
-          <input id="admin-email" name="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="email">
+          <input id="admin-email" name="email" type="email" placeholder="seuemail@exemplo.com" autocomplete="email" required>
         </label>
         <label for="admin-password">Senha
           <div class="password-field">
-            <input id="admin-password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password">
+            <input id="admin-password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
             <button type="button" class="password-toggle" aria-label="Mostrar senha">⌣</button>
           </div>
         </label>
-        <div class="login-options">
-          <label class="remember-option"><input type="checkbox"> <span>Lembrar acesso</span></label>
-          <a href="#">Esqueci minha senha</a>
-        </div>
-        <button class="login-submit" type="button">Entrar no painel <span>→</span></button>
+        <p class="login-error" role="alert" hidden></p>
+        <button class="login-submit" type="submit">Entrar no painel <span>→</span></button>
       </form>
-      <p class="login-demo-note">Interface de demonstração · autenticação ainda não conectada.</p>
     </section>
   </main>
 <script src="{{ url_for('static', filename='js/admin-login.js') }}"></script>

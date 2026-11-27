@@ -57,9 +57,7 @@ function createApp(ai, cfg = config) {
   app.post("/api/chat", async (req, res) => {
     try {
       const { message, history } = req.body || {};
-      const startedAt = Date.now();
       const result = await ai.chat({ message, history }); // roda todo o fluxo
-      if (cfg.logTimings) console.log(`[IA-NAP] conversa respondida em ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
       res.json(result);
     } catch (err) {
       if (err.status === 400) return res.status(400).json({ message: "Escreva uma mensagem para a assistente." });

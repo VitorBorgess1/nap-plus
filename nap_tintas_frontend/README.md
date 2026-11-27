@@ -1,6 +1,6 @@
 # NAP Tintas — Projeto NAP+
 
-Frontend funcional com backend Flask mínimo para o protótipo da plataforma NAP Tintas.
+Site e painel administrativo da NAP Tintas, com backend Flask e catálogo no Supabase.
 
 ## Estrutura
 
@@ -39,10 +39,11 @@ nap_tintas_frontend/
 - Busca e filtro por categoria.
 - Carrinho no `localStorage`.
 - Checkout.
-- Endpoint demonstrativo de criação de pedido/pagamento.
+- Checkout que cria o pedido de verdade (reserva o estoque e registra no painel).
 - Módulo inicial de recomendação.
 - API separada do frontend.
-- Estrutura preparada para futura integração com banco de dados.
+- Catálogo e estoque no Supabase; pedidos e demais cadastros do painel em `data/admin_data.json`.
+- Painel `/admin` protegido por login.
 
 ## Executar
 
@@ -68,8 +69,14 @@ Depois:
 
 ```bash
 pip install -r requirements.txt
+cp IA-NAP/.env.example IA-NAP/.env   # preencha SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_KEY, ADMIN_PASSWORD e SECRET_KEY
 python app.py
 ```
+
+O Flask lê o **mesmo** `IA-NAP/.env` que a IA (ou um `.env` na raiz, que tem prioridade).
+O catálogo vem do Supabase (`PRODUCTS_SOURCE=supabase`, o padrão); se faltar
+`SUPABASE_URL`/`SUPABASE_KEY` o app não sobe, de propósito.
+Para desenvolver sem banco: `PRODUCTS_SOURCE=json` (usa `data/products.json`).
 
 Acesse:
 
@@ -126,24 +133,56 @@ No `app.py`, o campo `icon` de cada produto guarda o **nome** do ícone Lucide
 (ex.: `"house"`, `"spray-can"`). Ao migrar para um banco de dados, ele pode
 virar uma coluna de texto.
 
-## Banco de dados no futuro
+## Catálogo e banco de dados
 
-O catálogo está temporariamente no `PRODUCTS` dentro de `app.py`.
+**Fonte única de produtos:** o catálogo vem do Supabase (tabela de produtos + tabela
+`estoque`) e é lido por `catalog.py`. Site, painel admin, recomendador e **IA-NAP**
+leem o mesmo banco, então a IA só recomenda o que existe na loja e com o estoque real.
+Não há mais lista de produtos no `app.py` nem em `admin.js`.
 
-A ideia é manter o frontend consumindo:
+- `catalog.py` aceita colunas em português ou inglês (mesmos nomes da IA-NAP) e grava
+  usando os nomes reais das colunas da sua tabela.
+- Estoque: lido/gravado na tabela `estoque` (`produto_id`, `quantidade`).
+- Se o Supabase cair, as rotas respondem `503` — não há "plano B" em JSON, para nunca
+  haver dois catálogos diferentes.
+- Testes: `python -m unittest discover -s tests -v` (usa um Supabase falso, sem internet).
+
+A interface consome:
 
 - `GET /api/products`
 - `GET /api/products/<id>`
 - `POST /api/recommend`
 - `POST /api/payment`
 
-Assim, futuramente o conteúdo dessas rotas pode vir de PostgreSQL, MySQL, SQLite ou outro banco sem precisar reescrever as páginas.
+Os ids podem ser número ou texto (uuid). Trocar de banco não exige reescrever as páginas.
+
+## Sincronização automática com o Supabase
+
+Tudo que você mudar direto no Supabase (produto novo, preço, estoque, ativar/desativar)
+chega ao site **sozinho**, sem cadastrar nada à mão e sem reiniciar:
+
+- O servidor guarda o catálogo por no máximo `SUPABASE_CACHE_SECONDS` (padrão **3 s**) e as
+  respostas da API não ficam em cache no navegador.
+- A página de produtos se atualiza a cada 15 s e ao voltar para a aba, mantendo busca e filtros.
+- O carrinho/checkout confere preço e estoque atuais antes de mostrar o total.
+
+Como o estoque é lido (nesta ordem): **linha na tabela de estoque** (`SUPABASE_STOCK_TABLE`,
+colunas `produto_id` + `quantidade`) → **coluna de estoque do próprio produto** → **sem registro
+de estoque**. Neste último caso o produto novo aparece na loja com `SUPABASE_UNTRACKED_STOCK`
+unidades (padrão 100) até você cadastrar a quantidade; use `0` para esconder produtos sem estoque
+cadastrado. Se a tabela de estoque não existir, o site usa a coluna do produto.
+
+Produto só some se estiver **inativo** (`ativo = false`) ou com **estoque 0**.
+Para conferir produto por produto o que o servidor está lendo e por que um item não aparece,
+abra (logado no painel) `/api/admin/catalog-check`.
+
+Se mesmo assim algo não aparecer, as causas comuns são: falta de policy de **SELECT** (RLS)
+na tabela de produtos ou de estoque, tabela não exposta na Data API, ou o site rodando com
+`PRODUCTS_SOURCE=json`.
 
 ## Inteligência artificial
 
-O `/api/recommend` atualmente utiliza regras simples para demonstrar o fluxo.
-
-Para a versão final, a arquitetura pode ser:
+O `/api/recommend` usa regras simples sobre o catálogo real. A conversa com a IA (Gemini) passa por `/api/ai/chat` e pelo serviço `IA-NAP`. Fluxo:
 
 ```text
 Cliente
@@ -163,11 +202,20 @@ Recomendações
 Frontend
 ```
 
-## Pagamentos
+## Pedidos e pagamento
 
-O `/api/payment` é propositalmente demonstrativo.
+O `/api/payment` cria o pedido de verdade: confere o estoque no banco, **reserva** as
+unidades (desconta do estoque) e registra o pedido no painel como **Aguardando pagamento**.
+O cliente informa nome, e-mail e CPF/CNPJ (o documento é exigido mas **não é gravado**).
 
-Para produção, deve ser conectado a um gateway de pagamento. Dados sensíveis de cartão não devem ser armazenados no frontend ou enviados diretamente para uma API própria sem a arquitetura de segurança adequada.
+**Ainda não há gateway de pagamento.** A loja combina o pagamento com o cliente pelo e-mail
+do pedido e, ao confirmar, muda o status para **Pago** no painel. Para cobrar online, é
+preciso integrar um gateway (Mercado Pago, Stripe, Pagar.me...) em `/api/payment`. Dados de
+cartão nunca devem passar por este servidor.
+
+Limites atuais: a reserva de estoque é segura dentro de um único processo do Flask; para
+rodar vários processos/servidores ao mesmo tempo, mova a reserva para uma função no banco.
+Pedidos cancelados ainda não devolvem o estoque automaticamente (ajuste no painel).
 
 ## Relação com o TAP
 
@@ -200,20 +248,23 @@ O HTML e o CSS foram atualizados para uma identidade mais colorida, com manchas 
 
 ## Painel administrativo (`/admin`)
 
-Painel só de frontend: não depende do Flask nem de banco. Os dados de exemplo
-ficam em `static/js/admin.js` (função `seed()`) e as alterações são gravadas no
-`localStorage` do navegador (chave `nap_admin_v2`). O botão **Restaurar dados de
-exemplo** (menu lateral) volta ao estado inicial.
+**Produtos & estoque** (e os indicadores que dependem deles) vêm do banco pela API
+`/api/admin/products`: criar, editar, ajustar estoque e excluir gravam direto no Supabase
+e aparecem na loja e na IA.
+Para gravar, o Flask precisa de uma chave com permissão de escrita (`SUPABASE_SERVICE_KEY`,
+só no servidor) ou de policies de escrita no Supabase.
 
-Seções: Visão geral · Produtos & estoque · Pedidos · Ordens de compra ·
-Expedições · Fornecedores. Para ligar a um backend/banco no futuro, troque
-`load()` e `save()` em `admin.js` por chamadas de API.
+**Pedidos, Ordens de compra, Expedições e Fornecedores** também ficam no servidor
+(`/api/admin/orders`, `/purchase-orders`, `/shipments`, `/suppliers`), salvos em
+`data/admin_data.json` (ou no arquivo de `ADMIN_DATA_FILE`). O arquivo começa vazio e
+**não entra no git** (são dados reais da loja): faça backup dele.
 
 Estilos do painel: `static/css/admin.css` (independente do `style.css`).
 
-A tela `/admin/login` é só demonstrativa: o botão **Entrar no painel** leva direto a
-`/admin` (sem autenticação). As alterações feitas no painel ficam só no navegador e
-**não** alteram o catálogo da loja (`data/products.json`) — isso depende de um backend.
+**Login do admin:** `/admin` e `/api/admin/*` exigem login. Configure no `.env`
+`ADMIN_EMAIL` (opcional), `ADMIN_PASSWORD` (obrigatória; sem ela o painel fica trancado) e
+`SECRET_KEY` (fixa, para a sessão não cair a cada reinício). Em produção use HTTPS e
+`SESSION_COOKIE_SECURE=1`. Há limite de 5 tentativas erradas por IP a cada 5 minutos.
 
 ## Login do cliente (`/login`)
 

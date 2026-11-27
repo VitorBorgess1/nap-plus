@@ -29,13 +29,12 @@
     </nav>
     <div class="side-foot">
       <a href="{{ url_for('home') }}">{{ icon('arrow-left') }}Voltar ao site</a>
-      <a href="{{ url_for('admin_login') }}">{{ icon('log-out') }}Sair</a>
-      <button type="button" data-act="reset">{{ icon('rotate-ccw') }}Restaurar dados de exemplo</button>
+      <a href="{{ url_for('admin_logout') }}">{{ icon('log-out') }}Sair</a>
     </div>
   </aside>
 
   <main class="main">
-    <header class="top"><h1 id="title">Visão geral</h1><span class="demo">Protótipo · dados salvos neste navegador</span></header>
+    <header class="top"><h1 id="title">Visão geral</h1></header>
 
     <section id="sec-dashboard" class="sec"></section>
 

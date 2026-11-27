@@ -3,6 +3,43 @@
    Depende de common.js (getCart, saveCart, money, icon...)
    ============================================================ */
 
+// O carrinho guarda preço e nome de quando o produto foi adicionado. Antes de mostrar o total,
+// confere com o catálogo atual: preço mudou, produto saiu da loja ou o estoque diminuiu.
+async function syncCartWithCatalog() {
+    const cart = getCart();
+    if (!cart.length) return;
+    let catalog;
+    try {
+        const response = await fetch("/api/products", { cache: "no-store" });
+        if (!response.ok) return;
+        catalog = await response.json();
+    } catch {
+        return;   // sem conexão: o servidor confere tudo de novo ao enviar o pedido
+    }
+    const byId = new Map(catalog.map(p => [String(p.id), p]));
+    const notes = [];
+    const synced = [];
+    cart.forEach(item => {
+        const product = byId.get(String(item.id));
+        if (!product) { notes.push(`${item.name} não está mais disponível e saiu do carrinho.`); return; }
+        if (product.price !== item.price) notes.push(`O preço de ${product.name} mudou para ${money(product.price)}.`);
+        let quantity = item.quantity;
+        if (quantity > product.stock) {
+            quantity = product.stock;
+            notes.push(`${product.name}: só há ${product.stock} em estoque, ajustamos a quantidade.`);
+        }
+        synced.push({ ...item, name: product.name, price: product.price, quantity });
+    });
+    if (JSON.stringify(synced) !== JSON.stringify(cart)) {
+        saveCart(synced);
+        updateCartCount();
+    }
+    const box = document.getElementById("cart-notes");
+    if (box && notes.length) {
+        box.innerHTML = notes.map(n => `<div class="error-message">${n}</div>`).join("");
+    }
+}
+
 function renderCart() {
     const cart = getCart();
     const container = document.getElementById("cart-items");
@@ -73,7 +110,7 @@ async function submitPayment(event) {
 
     const button = event.target.querySelector("button");
     button.disabled = true;
-    button.textContent = "Criando pedido...";
+    button.textContent = "Enviando pedido...";
 
     try {
         const response = await fetch("/api/payment", {
@@ -90,10 +127,10 @@ async function submitPayment(event) {
 
         result.innerHTML = `
             <div class="success-message">
-                <strong>Pedido criado!</strong>
+                <strong>Pedido recebido!</strong>
                 <p>Número: ${data.order.id}</p>
                 <p>Total: ${money(data.order.total)}</p>
-                <small>Modo demonstrativo: nenhum pagamento real foi processado.</small>
+                <small>Enviaremos as instruções de pagamento para ${data.order.customer.email}. O pedido só é separado depois da confirmação do pagamento.</small>
             </div>
         `;
 
@@ -105,11 +142,12 @@ async function submitPayment(event) {
         result.innerHTML = `<div class="error-message">${error.message}</div>`;
     } finally {
         button.disabled = false;
-        button.innerHTML = `Criar pedido ${icon("arrow-right")}`;
+        button.innerHTML = `Enviar pedido ${icon("arrow-right")}`;
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    await syncCartWithCatalog();
     renderCart();
     document.getElementById("payment-form")
         .addEventListener("submit", submitPayment);

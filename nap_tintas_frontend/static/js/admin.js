@@ -1,8 +1,10 @@
 /* ============================================================
-   ADMIN.JS — painel administrativo (somente frontend)
-   Os dados ficam no localStorage do navegador (chave KEY), a partir
-   de dados de exemplo (seed). Para ligar a um backend/banco no futuro,
-   troque load() e save() por chamadas de API.
+   ADMIN.JS — painel administrativo
+   PRODUTOS & ESTOQUE: vêm do banco de dados pela API do Flask
+   (/api/admin/products), o MESMO catálogo que a loja e a IA usam.
+   PEDIDOS, ORDENS DE COMPRA, EXPEDIÇÕES e FORNECEDORES: também vêm do
+   servidor (/api/admin/...), salvos em data/admin_data.json.
+   Nada fica só no navegador e não há dados de exemplo.
    ============================================================ */
 (() => {
 const KEY = 'nap_admin_v2', LOW = 10;
@@ -15,54 +17,46 @@ const fdate = d => d ? d.split('-').reverse().join('/') : '—';
 const ic = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"></use></svg>`;
 const slug = s => norm(s).replace(/\s+/g, '-');
 
-/* ---------- dados de exemplo ---------- */
-const seed = () => ({
-  products: [
-    { id: 1, name: 'Suvinil Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 189.9, stock: 12, image: '/static/img/products/produto-1.webp', description: 'Tinta acrílica fosca para paredes.' },
-    { id: 2, name: 'Suvinil Toque Fosco Completo', brand: 'Suvinil', category: 'Parede', price: 119.9, stock: 25, image: '/static/img/products/produto-2.webp', description: 'Tinta fosca para paredes e tetos.' },
-    { id: 3, name: 'Suvinil Cor & Proteção Fosco', brand: 'Suvinil', category: 'Madeira e Metal', price: 149.9, stock: 8, image: '/static/img/products/produto-3.webp', description: 'Esmalte para madeira e metais.' },
-    { id: 4, name: 'Borracha Líquida Elástica Quartzolit', brand: 'Quartzolit', category: 'Piso', price: 169.9, stock: 6, image: '/static/img/products/produto-4.webp', description: 'Impermeabilizante elástico.' },
-    { id: 5, name: 'Impermeabilizante para Parede', brand: 'Quartzolit', category: 'Tratamento', price: 139.9, stock: 10, image: '/static/img/products/produto-5.webp', description: 'Tratamento de umidade e proteção.' },
-    { id: 6, name: 'Tinta Spray Multiuso', brand: 'Colorgin', category: 'Multiuso', price: 39.9, stock: 30, image: '/static/img/products/produto-6.webp', description: 'Spray para pequenos projetos.' },
-    { id: 7, name: 'Massa Corrida PVA', brand: 'Suvinil', category: 'Preparação', price: 34.9, stock: 0, image: '', description: 'Nivela e prepara paredes internas.' }
-  ],
-  orders: [
-    { id: 'PED-1001', customer: 'Mariana Souza', date: '2026-09-19', items: 2, total: 379.8, payment: 'Pix', status: 'Separando' },
-    { id: 'PED-1002', customer: 'Carlos Lima', date: '2026-09-20', items: 1, total: 169.9, payment: 'Cartão de crédito', status: 'Pago' },
-    { id: 'PED-1003', customer: 'Ana Oliveira', date: '2026-09-20', items: 3, total: 289.7, payment: 'Pix', status: 'Enviado' },
-    { id: 'PED-1004', customer: 'Roberto Alves', date: '2026-09-17', items: 4, total: 559.6, payment: 'Boleto', status: 'Pronto para envio' },
-    { id: 'PED-1005', customer: 'Juliana Prado', date: '2026-09-15', items: 1, total: 39.9, payment: 'Pix', status: 'Cancelado' },
-    { id: 'PED-1006', customer: 'Construtora Vila Nova', date: '2026-09-12', items: 6, total: 1139.4, payment: 'Boleto', status: 'Enviado' }
-  ],
-  pos: [
-    { id: 'OC-2001', supplier: 'Suvinil', date: '2026-09-18', delivery: '2026-09-24', items: 40, total: 5400, status: 'Em trânsito' },
-    { id: 'OC-2002', supplier: 'Quartzolit', date: '2026-09-20', delivery: '2026-09-26', items: 24, total: 3120, status: 'Rascunho' },
-    { id: 'OC-2003', supplier: 'Colorgin', date: '2026-09-10', delivery: '2026-09-14', items: 60, total: 1500, status: 'Recebida' },
-    { id: 'OC-2004', supplier: 'Suvinil', date: '2026-09-19', delivery: '2026-09-27', items: 30, total: 3600, status: 'Enviada' }
-  ],
-  ships: [
-    { id: 'ENV-3001', order: 'PED-1003', carrier: 'Correios', tracking: 'BR123456789BR', sent_at: '2026-09-20', status: 'Em trânsito' },
-    { id: 'ENV-3002', order: 'PED-1006', carrier: 'Jadlog', tracking: 'JD0098221', sent_at: '2026-09-13', status: 'Entregue' },
-    { id: 'ENV-3003', order: 'PED-1004', carrier: 'Loggi', tracking: '', sent_at: '', status: 'Preparando' }
-  ],
-  suppliers: [
-    { id: 'FOR-0001', name: 'Suvinil', contact: 'Equipe comercial', email: 'comercial@suvinil.exemplo', phone: '(11) 0000-0001', lead: 5 },
-    { id: 'FOR-0002', name: 'Quartzolit', contact: 'Distribuidor regional', email: 'vendas@quartzolit.exemplo', phone: '(11) 0000-0002', lead: 6 },
-    { id: 'FOR-0003', name: 'Colorgin', contact: 'Equipe comercial', email: 'comercial@colorgin.exemplo', phone: '(11) 0000-0003', lead: 4 }
-  ]
-});
-let db;
-const load = () => { try { db = { ...seed(), ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch { db = seed(); } };
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { toast('Sem espaço no navegador (imagem muito grande?)'); } };
+/* ---------- dados (todos vêm do servidor) ---------- */
+let db = { products: [], orders: [], pos: [], ships: [], suppliers: [] };
+// Limpa o que versões antigas do painel guardavam no navegador (inclusive pedidos de exemplo).
+try { localStorage.removeItem(KEY); } catch { /* sem acesso ao localStorage: tudo bem */ }
+const URLS = { orders: 'orders', pos: 'purchase-orders', ships: 'shipments', suppliers: 'suppliers' };
+const listUrl = k => `/api/admin/${URLS[k]}`;
+const rowUrl = (k, id) => `${listUrl(k)}/${encodeURIComponent(id)}`;
+const putRow = (k, r) => { const i = db[k].findIndex(x => String(x.id) === String(r.id)); if (i >= 0) db[k][i] = r; else db[k].unshift(r); };
+
+/* ---------- API ---------- */
+const PS = { loading: true, error: '' };
+async function api(method, url, body) {
+  let res;
+  try {
+    res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  } catch { throw new Error('Sem conexão com o servidor.'); }
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { location.href = '/admin/login'; throw new Error('Sessão expirada. Faça login de novo.'); }
+  if (!res.ok) throw new Error(data.message || data.error || `Erro ${res.status}`);
+  return data;
+}
+const putProduct = p => { const i = db.products.findIndex(x => String(x.id) === String(p.id)); if (i >= 0) db.products[i] = p; else db.products.unshift(p); };
+async function loadProducts() {
+  PS.loading = true; PS.error = ''; renderAll();
+  try {
+    const keys = Object.keys(URLS);
+    const [products, ...rest] = await Promise.all([api('GET', '/api/admin/products'), ...keys.map(k => api('GET', listUrl(k)))]);
+    db.products = products; keys.forEach((k, i) => { db[k] = rest[i]; });
+  } catch (e) { PS.error = e.message; db.products = []; }
+  PS.loading = false; renderAll();
+}
 
 /* ---------- configuração das listas (pedidos, OCs, expedições, fornecedores) ---------- */
-const PAY = ['Pix', 'Cartão de crédito', 'Cartão de débito', 'Boleto'];
+const PAY = ['A combinar', 'Pix', 'Cartão de crédito', 'Cartão de débito', 'Boleto'];
 const selOpts = (o, v) => o.map(x => `<option${x === v ? ' selected' : ''}>${esc(x)}</option>`).join('');
 const E = {
-  orders: { route: 'pedidos', one: 'pedido', prefix: 'PED', statuses: ['Pago', 'Separando', 'Pronto para envio', 'Enviado', 'Cancelado'],
+  orders: { route: 'pedidos', one: 'pedido', prefix: 'PED', statuses: ['Aguardando pagamento', 'Pago', 'Separando', 'Pronto para envio', 'Enviado', 'Cancelado'],
     cols: [['id', 'Pedido'], ['customer', 'Cliente'], ['date', 'Data', fdate], ['items', 'Itens'], ['total', 'Valor', money], ['payment', 'Pagamento'], ['status', 'Status']],
     fields: () => [['customer', 'Cliente', 'text', { req: 1 }], ['date', 'Data', 'date'], ['items', 'Quantidade de itens', 'number', { min: 1 }], ['total', 'Valor (R$)', 'number', { step: '0.01', min: 0 }], ['payment', 'Forma de pagamento', 'select', { opts: PAY }], ['status', 'Status', 'select', { opts: E.orders.statuses }]],
-    blank: () => ({ date: today(), items: 1, total: 0, payment: 'Pix', status: 'Pago' }) },
+    blank: () => ({ date: today(), items: 1, total: 0, payment: 'A combinar', status: 'Aguardando pagamento' }) },
   pos: { route: 'compras', one: 'ordem de compra', prefix: 'OC', statuses: ['Rascunho', 'Enviada', 'Em trânsito', 'Recebida', 'Cancelada'],
     cols: [['id', 'Ordem'], ['supplier', 'Fornecedor'], ['date', 'Data', fdate], ['delivery', 'Previsão de entrega', fdate], ['items', 'Itens'], ['total', 'Valor', money], ['status', 'Status']],
     fields: () => [['supplier', 'Fornecedor', 'select', { opts: db.suppliers.map(s => s.name) }], ['date', 'Data', 'date'], ['delivery', 'Previsão de entrega', 'date'], ['items', 'Quantidade de itens', 'number', { min: 1 }], ['total', 'Valor (R$)', 'number', { step: '0.01', min: 0 }], ['status', 'Status', 'select', { opts: E.pos.statuses }]],
@@ -77,7 +71,6 @@ const E = {
 };
 const ROUTES = { dashboard: 'Visão geral', produtos: 'Produtos & estoque', pedidos: 'Pedidos', compras: 'Ordens de compra', expedicoes: 'Expedições', fornecedores: 'Fornecedores' };
 const F = { orders: '', pos: '', ships: '', inv: 'all' };
-const nextId = (pre, list) => `${pre}-${String(Math.max(0, ...list.map(x => parseInt(String(x.id).replace(/\D/g, '')) || 0)) + 1).padStart(4, '0')}`;
 
 /* ---------- UI básica ---------- */
 let tt;
@@ -102,18 +95,20 @@ function form(title, fields, vals, onSave, extra = '') {
   };
   const html = fields.map(f => f.grid ? `<div class="g">${f.grid.map(inp).join('')}</div>` : inp(f)).join('');
   openModal(`<h2>${title}</h2><form class="form" id="f">${html}${extra}<div class="acts2"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn">Salvar</button></div></form>`);
-  $('#f').onsubmit = e => {
+  $('#f').onsubmit = async e => {
     e.preventDefault();
     const d = {}; new FormData(e.target).forEach((v, k) => d[k] = v);
     fields.flatMap(f => f.grid || [f]).forEach(([n, , t]) => { if (t === 'number') d[n] = Number(d[n] || 0); });
-    onSave(d); save(); closeModal(); renderAll();
+    const btn = $('#f button:not([data-act])'); if (btn) btn.disabled = true;
+    try { await onSave(d); closeModal(); renderAll(); }   // onSave pode ser assíncrono (API)
+    catch (err) { toast(err.message || 'Não foi possível salvar'); if (btn) btn.disabled = false; }
   };
 }
 
 /* ---------- cálculo dos indicadores ---------- */
 function stats() {
   const P = db.products, O = db.orders, C = db.pos;
-  const sold = O.filter(o => o.status !== 'Cancelado');
+  const sold = O.filter(o => !['Cancelado', 'Aguardando pagamento'].includes(o.status));
   return {
     value: P.reduce((s, p) => s + p.price * p.stock, 0), n: P.length, units: P.reduce((s, p) => s + p.stock, 0),
     low: P.filter(p => p.stock > 0 && p.stock <= LOW).length, out: P.filter(p => p.stock === 0).length,
@@ -137,7 +132,7 @@ function renderDash() {
     ['Pedidos pendentes', s.pending, 'pagos, separando ou prontos', 'clock', 'pink', 'pedidos'],
     ['Produtos em trânsito', s.inTransit, 'unidades em ordens de compra em trânsito', 'truck', 'blue', 'compras'],
     ['Ordens de compra abertas', s.openPO, 'rascunho, enviada ou em trânsito', 'clipboard-list', 'green', 'compras'],
-    ['Vendas registradas', money(s.sales), `${s.salesN} pedido${s.salesN === 1 ? '' : 's'} (sem cancelados)`, 'trending-up', 'orange', 'pedidos']
+    ['Vendas registradas', money(s.sales), `${s.salesN} pedido${s.salesN === 1 ? '' : 's'} pago${s.salesN === 1 ? '' : 's'}`, 'trending-up', 'orange', 'pedidos']
   ];
   const low = db.products.filter(p => p.stock <= LOW).sort((a, b) => a.stock - b.stock).slice(0, 6);
   $('#sec-dashboard').innerHTML = `<div class="kpis">${K.map(k => `<button class="kpi" style="--c:var(--${k[4]})" data-go="${k[5]}"><span class="h">${k[0]}${ic(k[3])}</span><strong>${k[1]}</strong><small>${k[2]}</small></button>`).join('')}</div>
@@ -151,7 +146,7 @@ function renderInv() {
   const cnt = { all: P.length, low: P.filter(p => p.stock > 0 && p.stock <= LOW).length, out: P.filter(p => p.stock === 0).length };
   $('#inv-chips').innerHTML = [['all', 'Todos'], ['low', 'Estoque baixo'], ['out', 'Zerado']].map(([k, l]) => `<button class="chip${F.inv === k ? ' on' : ''}" data-inv="${k}">${l} (${cnt[k]})</button>`).join('');
   const rows = P.filter(p => norm(`${p.name} ${p.brand} ${p.category}`).includes(q) && (F.inv === 'all' || (F.inv === 'low' ? p.stock > 0 && p.stock <= LOW : p.stock === 0)));
-  $('#inv-table').innerHTML = `<thead><tr><th>Produto</th><th>Categoria</th><th>Preço (R$)</th><th>Estoque</th><th>Situação</th><th></th></tr></thead><tbody>${rows.map(p => `<tr>
+  $('#inv-table').innerHTML = `<thead><tr><th>Produto</th><th>Categoria</th><th>Preço (R$)</th><th>Estoque</th><th>Situação</th><th></th></tr></thead><tbody>${PS.loading ? `<tr><td colspan="6" class="empty">Carregando produtos do banco…</td></tr>` : PS.error ? `<tr><td colspan="6" class="empty">Não foi possível carregar os produtos: ${esc(PS.error)} <button class="btn ghost" data-act="retry-products">Tentar de novo</button></td></tr>` : rows.map(p => `<tr>
     <td><div class="prod"><div class="thumb">${p.image ? `<img src="${esc(p.image)}" alt="">` : ''}</div><div><b>${esc(p.name)}</b><small>${esc(p.brand)}</small></div></div></td>
     <td>${esc(p.category)}</td>
     <td><input class="cell" type="number" step="0.01" min="0" value="${Number(p.price).toFixed(2)}" data-price="${p.id}" aria-label="Preço"></td>
@@ -167,10 +162,11 @@ function productModal(p) {
   form(p ? 'Editar produto' : 'Adicionar produto', [
     ['name', 'Nome', 'text', { req: 1 }], { grid: [['brand', 'Marca', 'text', { req: 1, list: [...new Set(db.products.map(x => x.brand))] }], ['category', 'Categoria', 'select', { opts: cats }]] },
     { grid: [['price', 'Preço (R$)', 'number', { step: '0.01', min: 0, req: 1 }], ['stock', 'Quantidade em estoque', 'number', { min: 0, req: 1 }]] },
-    ['description', 'Descrição', 'textarea']], v, d => {
+    ['description', 'Descrição', 'textarea']], v, async d => {
       d.image = pendingImg ?? (d.image || '');
       d.stock = Math.max(0, Math.round(d.stock));
-      if (p) Object.assign(p, d); else db.products.unshift({ id: Math.max(0, ...db.products.map(x => x.id)) + 1, ...d });
+      // Grava no banco; a lista local só é atualizada com o que o servidor devolveu.
+      putProduct(await api(p ? 'PUT' : 'POST', p ? `/api/admin/products/${encodeURIComponent(p.id)}` : '/api/admin/products', d));
       toast('Produto salvo');
     }, extra);
   let pendingImg = v.image?.startsWith('data:') ? v.image : null;
@@ -186,7 +182,12 @@ function productModal(p) {
     r.readAsDataURL(f);
   };
 }
-function setStock(id, v) { const p = db.products.find(x => x.id == id); if (!p) return; p.stock = Math.max(0, Math.round(Number(v) || 0)); save(); renderAll(); }
+async function updateProduct(id, patch, okMsg) {
+  try { putProduct(await api('PUT', `/api/admin/products/${encodeURIComponent(id)}`, patch)); if (okMsg) toast(okMsg); }
+  catch (e) { toast(e.message); }
+  renderAll();   // também desfaz na tela o valor digitado se o banco recusou
+}
+function setStock(id, v) { if (!db.products.some(x => x.id == id)) return; return updateProduct(id, { stock: Math.max(0, Math.round(Number(v) || 0)) }); }
 
 /* ---------- listas genéricas ---------- */
 function renderList(key) {
@@ -224,25 +225,35 @@ document.addEventListener('click', e => {
   if (t.dataset.f) { F[t.dataset.f] = t.dataset.v; renderList(t.dataset.f); return; }
   const { act, e: key, id } = t.dataset;
   if (act === 'close') closeModal();
+  else if (act === 'retry-products') loadProducts();
   else if (act === 'stock') { const p = db.products.find(x => x.id == id); setStock(id, p.stock + Number(t.dataset.d) * (e.shiftKey ? 10 : 1)); }
   else if (act === 'new-product') productModal();
-  else if (act === 'new') form(`Nov${key === 'pos' || key === 'ships' ? 'a' : 'o'} ${E[key].one}`, E[key].fields(), E[key].blank(), d => { db[key].unshift({ id: nextId(E[key].prefix, db[key]), ...d }); toast('Cadastrado'); });
+  else if (act === 'new') form(`Nov${key === 'pos' || key === 'ships' ? 'a' : 'o'} ${E[key].one}`, E[key].fields(), E[key].blank(), async d => { putRow(key, await api('POST', listUrl(key), d)); toast('Cadastrado'); });
   else if (act === 'edit') {
     if (key === 'products') return productModal(db.products.find(p => p.id == id));
-    const r = db[key].find(x => x.id === id); form(`Editar ${E[key].one}`, E[key].fields(), r, d => { Object.assign(r, d); toast('Alterações salvas'); });
+    const r = db[key].find(x => x.id === id); form(`Editar ${E[key].one}`, E[key].fields(), r, async d => { putRow(key, await api('PUT', rowUrl(key, id), d)); toast('Alterações salvas'); });
   } else if (act === 'del') {
     const list = db[key], r = list.find(x => String(x.id) === id);
-    confirmBox(`Excluir "${r.name || r.id}"? Esta ação não pode ser desfeita.`, () => { db[key] = list.filter(x => x !== r); save(); renderAll(); toast('Excluído'); });
-  } else if (act === 'reset') confirmBox('Apagar as alterações feitas neste navegador e voltar aos dados de exemplo?', () => { db = seed(); save(); renderAll(); toast('Dados de exemplo restaurados'); }, 'Restaurar');
+    if (key === 'products') confirmBox(`Excluir "${r.name}" do catálogo? Ele some da loja e da IA.`, async () => {
+      try { await api('DELETE', `/api/admin/products/${encodeURIComponent(r.id)}`); db.products = db.products.filter(x => x !== r); renderAll(); toast('Excluído'); }
+      catch (e) { toast(e.message); }
+    });
+    else confirmBox(`Excluir "${r.name || r.id}"? Esta ação não pode ser desfeita.`, async () => {
+      try { await api('DELETE', rowUrl(key, r.id)); db[key] = db[key].filter(x => x !== r); renderAll(); toast('Excluído'); }
+      catch (e) { toast(e.message); }
+    });
+  }
 });
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.qty) setStock(t.dataset.qty, t.value);
-  else if (t.dataset.price) { const p = db.products.find(x => x.id == t.dataset.price); p.price = Math.max(0, Number(t.value) || 0); save(); renderAll(); toast('Preço atualizado'); }
+  else if (t.dataset.price) updateProduct(t.dataset.price, { price: Math.max(0, Number(t.value) || 0) }, 'Preço atualizado');
   else if (t.dataset.status) {
-    const r = db[t.dataset.status].find(x => x.id === t.dataset.id); r.status = t.value;
-    if (t.dataset.status === 'ships' && ['Enviado', 'Em trânsito'].includes(t.value) && !r.sent_at) r.sent_at = today();
-    save(); renderAll(); toast('Status atualizado');
+    const k = t.dataset.status;
+    api('PUT', rowUrl(k, t.dataset.id), { status: t.value })
+      .then(r => { putRow(k, r); toast('Status atualizado'); })
+      .catch(err => toast(err.message))
+      .finally(renderAll);   // também desfaz na tela o status se o servidor recusou
   }
 });
 document.addEventListener('error', e => {
@@ -253,5 +264,5 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 $('#q').addEventListener('input', renderInv);
 window.addEventListener('hashchange', route);
 
-load(); renderAll(); route();
+renderAll(); route(); loadProducts();
 })();
